@@ -4,7 +4,7 @@ import csv
 import numpy as np
 
 
-def load_csv_data(data_path, sub_sample=False):
+def load_csv_data(data_path, step=None):
     """Loads data and returns y (class labels), tX (features) and ids (event ids)"""
     y = np.genfromtxt(data_path, delimiter=",", skip_header=1, dtype=str, usecols=1)
     x = np.genfromtxt(data_path, delimiter=",", skip_header=1)
@@ -16,10 +16,10 @@ def load_csv_data(data_path, sub_sample=False):
     yb[np.where(y=='b')] = -1
     
     # sub-sample
-    if sub_sample:
-        yb = yb[::50]
-        input_data = input_data[::50]
-        ids = ids[::50]
+    if step:
+        yb = yb[::step]
+        input_data = input_data[::step]
+        ids = ids[::step]
 
     return yb, input_data, ids
 
