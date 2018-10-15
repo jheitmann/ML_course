@@ -90,3 +90,6 @@ ENV/
 
 # Mac folder attributes
 .DS_Store
+
+# Data 
+projects/project1/scripts/all
