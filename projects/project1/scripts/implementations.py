@@ -16,6 +16,23 @@ def compute_gradient(y, tx, w):
     grad = -tx.T.dot(err) / len(err)
     return grad, err
 
+def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
+    """ Generate a minibatch iterator for a dataset. """
+    data_size = len(y)
+
+    if shuffle:
+        shuffle_indices = np.random.permutation(np.arange(data_size))
+        shuffled_y = y[shuffle_indices]
+        shuffled_tx = tx[shuffle_indices]
+    else:
+        shuffled_y = y
+        shuffled_tx = tx
+    for batch_num in range(num_batches):
+        start_index = batch_num * batch_size
+        end_index = min((batch_num + 1) * batch_size, data_size)
+        if start_index != end_index:
+    yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
+
 def least_squares_GD(y, tx, initial_w, max_iters, gamma):
     """ Linear regression using gradient descent """
     # Define parameters to store w and loss
