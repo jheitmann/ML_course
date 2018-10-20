@@ -23,7 +23,6 @@ def load_csv_data(data_path, step=None):
 
     return yb, input_data, ids
 
-
 def predict_labels(weights, data):
     """Generates class predictions given weights, and a test data matrix"""
     y_pred = np.dot(data, weights)
@@ -31,7 +30,6 @@ def predict_labels(weights, data):
     y_pred[np.where(y_pred > 0)] = 1
     
     return y_pred
-
 
 def create_csv_submission(ids, y_pred, name):
     """
