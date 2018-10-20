@@ -28,3 +28,19 @@ def predict_prob(X):
 
 def predict(X, threshold=0.5):
     return 1. * (predict_prob(X) >= threshold)
+
+for i in range(19):
+    delcoltest=[False]*19
+    delcoltest[3]=True
+    delcoltest[6]=True
+    delcoltest[7]=True
+    delcoltest[9]=True
+    delcoltest[10]=True
+    delcoltest[12]=True
+    delcoltest[15]=True
+    delcoltest[17]=True
+    delcoltest=np.array(delcoltest)
+    trainvartest=trainvar[:,delcoltest]
+    print(i)
+    fit(trainvartest,train[0],verbose=True,max_iters=3)
+
