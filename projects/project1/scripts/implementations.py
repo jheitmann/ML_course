@@ -11,10 +11,11 @@ def compute_loss(y, tx, w):
     return calculate_mse(e)
 
 def compute_gradient(y, tx, w):
-    """ Compute the gradient. """
-    err = y - tx.dot(w)
-    grad = -tx.T.dot(err) / len(err)
-    return grad, err
+    """Compute the gradient."""
+    N = y.size
+    e = y - np.dot(tx,w)
+    gradient = (-1/N)*np.dot(tx.T,e)
+    return gradient
 
 def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
     """ Generate a minibatch iterator for a dataset. """
@@ -34,43 +35,44 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
 
 def least_squares_GD(y, tx, initial_w, max_iters, gamma):
-    """ Linear regression using gradient descent """
+    """Gradient descent algorithm."""
     # Define parameters to store w and loss
     ws = [initial_w]
-    losses = []
+    losses = [compute_loss(y,tx,initial_w)]
     w = initial_w
     for n_iter in range(max_iters):
-        # compute loss, gradient
-        grad, err = compute_gradient(y, tx, w)
-        loss = calculate_mse(err)
-        # gradient w by descent update
-        w = w - gamma * grad
-        # store w and loss
+        # Computes gradient
+        gradient = compute_gradient(y,tx,w)
+        # Updates w by gradient and computes loss
+        w = w - gamma*gradient
+        loss = compute_loss(y,tx,w)
+        # Store w and loss
         ws.append(w)
         losses.append(loss)
-        print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
+        print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
+              bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
+
     return losses, ws
 
-def least_squares_SGD(y, tx, initial_w, batch_size, max_iters, gamma):
-    """ Linear regression using stochastic gradient descent """
+def least_square_SGD(y, tx, initial_w, batch_size, max_iters, gamma):
+    """Stochastic gradient descent algorithm."""
     # Define parameters to store w and loss
     ws = [initial_w]
-    losses = []
+    losses = [compute_loss(y,tx,initial_w)]
     w = initial_w
-
     for n_iter in range(max_iters):
-        for y_batch, tx_batch in batch_iter(y, tx, batch_size=batch_size, num_batches=1):
-            # compute a stochastic gradient and loss
-            grad, _ = compute_gradient(y_batch, tx_batch, w)
-            # update w through the stochastic gradient update
-            w = w - gamma * grad
-            # calculate loss
-            loss = compute_loss(y, tx, w)
-            # store w and loss
+        for y_batch, tx_batch in batch_iter(y,tx,batch_size):
+            # Computes gradient
+            gradient = compute_gradient(y_batch,tx_batch,w)
+            # Updates w by gradient and computes loss
+            w = w - gamma*gradient
+            loss = compute_loss(y,tx,w)
+            # Store w and loss
             ws.append(w)
             losses.append(loss)
-
-        print("SGD({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
+            print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
+                  bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
+    
     return losses, ws
 
 def least_squares(y, tx):
