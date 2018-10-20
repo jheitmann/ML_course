@@ -8,6 +8,8 @@ def load_csv_data(data_path, step=None):
     """Loads data and returns y (class labels), tX (features) and ids (event ids)"""
     y = np.genfromtxt(data_path, delimiter=",", skip_header=1, dtype=str, usecols=1)
     x = np.genfromtxt(data_path, delimiter=",", skip_header=1)
+    z = np.genfromtxt(data_path, delimiter=",", dtype=str, max_rows=1)
+    z = z[2:]
     ids = x[:, 0].astype(np.int)
     input_data = x[:, 2:]
 
@@ -21,7 +23,7 @@ def load_csv_data(data_path, step=None):
         input_data = input_data[::step]
         ids = ids[::step]
 
-    return yb, input_data, ids
+    return yb, input_data, ids,z
 
 def predict_labels(weights, data):
     """Generates class predictions given weights, and a test data matrix"""
