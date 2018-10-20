@@ -46,3 +46,18 @@ def create_csv_submission(ids, y_pred, name):
         writer.writeheader()
         for r1, r2 in zip(ids, y_pred):
             writer.writerow({'Id':int(r1),'Prediction':int(r2)})
+            
+def standardize(x):
+    """Standardize the original data set."""
+    mean_x = np.mean(x)
+    x = x - mean_x
+    std_x = np.std(x)
+    x = x / std_x
+    return x, mean_x, std_x
+
+
+def build_model_data(x):
+    """Form (y,tX) to get regression data in matrix form."""
+    num_samples = x.shape[0]
+    tx = np.c_[np.ones(num_samples), x]
+    return tx
