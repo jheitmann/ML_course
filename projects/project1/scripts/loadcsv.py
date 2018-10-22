@@ -7,17 +7,19 @@ Created on Sat Oct 20 11:01:31 2018
 import numpy as np
 from proj1_helpers import load_csv_data
 
+def extend_and_standardize(input_data):
+      x, mean_x, std_x = standardize(input_data)
+      tx = build_model_data(x)
+      return tx
+
 train=load_csv_data(r"C:\Users\Facenomore\Documents\Maths\Master_3eme_sem\ML\project\train.csv")
 
 """Création des variable de travail et de nom en enlevant les colonnes avec des valeurs -999"""
-delcol=[None]*len(train[1][1,:])
-for i in range(len(train[1][1,:])):
-    delcol[i]= (-999 in train[1][:,i]) 
-delcol=np.array(delcol)
 
 
 trainvar=train[1][:,~delcol]
-trainname=train[3][~delcol]
+trainname=train[3]
+trainvartes=extend_and_standardize(trainvar)
 
 """construction of linear regression variables"""
 itemindex1=[0,1,2,3,4,5,6,7,8,9,11,12,14,16,17,18]
@@ -44,4 +46,4 @@ for i in range(long):
     
 for i in range(len(itemindex2)):
     trainlm[:,i+long2]=trainvar[:,itemindex2[i][0]]*trainvar[:,itemindex2[i][1]]
-    
+

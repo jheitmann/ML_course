@@ -15,7 +15,7 @@ def load_csv_data(data_path, step=None):
 
     # convert class labels from strings to binary (-1,1)
     yb = np.ones(len(y))
-    yb[np.where(y=='b')] = -1
+    yb[np.where(y=='b')] = 0
     
     # sub-sample
     if step:
