@@ -166,24 +166,24 @@ def sigmoid(t):
 def logistic_loss(y, tx, w):
     """compute the cost by negative log likelihood."""
     pred = sigmoid(tx.dot(w))
-    loss = y.T.dot(np.log(pred)) + (1 - y).T.dot(np.log(1 - pred))
-    return np.squeeze(- loss) 
+    loss = (-y * np.log(pred) - (1 - y) * np.log(1 - pred)).mean()
+    return loss 
     
 def logistic_gradient(y, tx, w):
     """compute the gradient of loss."""
     pred = sigmoid(tx.dot(w))
-    grad = tx.T.dot(pred - y)
+    grad = tx.T.dot(pred - y)/y.size
     return grad
 
-def learning_by_gradient_descent(y, tx, w, gamma):
+def learning_by_gradient_descent(y, tx, w, gamma,lambda_=0):
     """
     Do one step of gradient descen using logistic regression.
     Return the loss and the updated w.
     """
-    grad = logistic_gradient(y, tx, w)
+    grad = logistic_gradient(y, tx, w)+2*lambda_*w
     w -= gamma * grad
-    # loss = logistic_loss(y, tx, w)
-    return 0, w # changeme -> nan 
+    loss = logistic_loss(y, tx, w) + lambda_ * w.T.dot(w)
+    return loss, w # changeme -> nan 
 
 def logistic_regression(y, tx, initial_w, max_iters, gamma):
     """ Logistic regression using gradient descent or SGD """
@@ -205,6 +205,25 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     
     return loss, w
 
+
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     """ Regularized logistic regression using gradient descent or SGD """
+    threshold = -1 # 1e-8   
+    w = initial_w
+    losses = [0] # [logistic_loss(y,tx,initial_w)] 
+
+    # start the logistic regression
+    for iter in range(max_iters):
+        # get loss and update w.
+        loss, w = learning_by_gradient_descent(y, tx, w, gamma, lambda_)
+        # log info
+        if iter % 100 == 0:
+            print("Current iteration={i}, loss={l}".format(i=iter, l=loss))
+        # converge criterion
+        losses.append(loss)
+        if len(losses) > 1 and np.abs(losses[-1] - losses[-2]) < threshold:
+            break
+    
+    return loss, w
+    
     pass

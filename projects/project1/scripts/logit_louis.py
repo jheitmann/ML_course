@@ -30,7 +30,5 @@ def predict_prob(X,y):
 def predict(X, y, threshold=0.5):
     return 1. * (predict_prob(X,y) >= threshold)
 
-pred = predict_prob(trainvartes,train[0])
 
-result=sum(1. * (pred!=train[0]))/len(train[0])
 
