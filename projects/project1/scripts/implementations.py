@@ -61,7 +61,7 @@ def build_k_indices(y, k_fold, seed):
                  for k in range(k_fold)]
     return np.array(k_indices)
 
-def least_squares_GD(y, tx, initial_w, max_iters, gamma):
+def gradient_descent(y, tx, initial_w, max_iters, gamma):
     """Gradient descent algorithm."""
     # Define parameters to store w and loss
     ws = [initial_w]
@@ -79,6 +79,31 @@ def least_squares_GD(y, tx, initial_w, max_iters, gamma):
         #print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
          #     bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
 
+    return losses, ws
+
+def compute_gradient(y, tx, w): # official solution
+    """Compute the gradient."""
+    err = y - tx.dot(w)
+    grad = -tx.T.dot(err) / len(err)
+    return grad, err
+
+def least_squares_GD(y, tx, initial_w, max_iters, gamma): # official solution
+    """Gradient descent algorithm."""
+    # Define parameters to store w and loss
+    ws = [initial_w]
+    losses = []
+    w = initial_w
+    for n_iter in range(max_iters):
+        # compute loss, gradient
+        grad, err = compute_gradient(y, tx, w)
+        loss = calculate_mse(err)
+        # gradient w by descent update
+        w = w - gamma * grad
+        # store w and loss
+        ws.append(w)
+        losses.append(loss)
+        print("Gradient Descent({bi}/{ti}): loss={l}, w0={w0}, w1={w1}".format(
+              bi=n_iter, ti=max_iters - 1, l=loss, w0=w[0], w1=w[1]))
     return losses, ws
 
 def least_squares_SGD(y, tx, initial_w, batch_size, max_iters, gamma):
@@ -135,23 +160,28 @@ def cross_validation(y, tx, k_indices, k, lambda_):
 def find_optimal_lambda(y,tx):
     seed = 1
     k_fold = 4
-    lambdas = np.logspace(-4, 0, 20)
+    lambdas = np.logspace(-4, 0, 30)
     # split data in k fold
     k_indices = build_k_indices(y, k_fold, seed)
     
+    training_losses = []
     testing_losses = []
     
     for i, lambda_ in enumerate(lambdas):
         print("Iteration {}".format(i))
+        loss_tr_sum = 0
         loss_te_sum = 0
         for k in range(k_fold):
-            _, loss_te = cross_validation(y,tx,k_indices,k,lambda_)
+            loss_tr, loss_te = cross_validation(y,tx,k_indices,k,lambda_)
+            loss_tr_sum += loss_tr
             loss_te_sum += loss_te
-        testing_losses.append((loss_te_sum,lambda_))
+        training_losses.append(loss_tr_sum/k_fold)
+        testing_losses.append(loss_te_sum/k_fold)
+        # testing_losses.append((loss_te_sum/k_fold,lambda_))
         
-    optimal_lambda = min(testing_losses)[1]
-        
-    return optimal_lambda
+    # optimal_lambda = min(testing_losses)[1]
+    return lambdas, training_losses, testing_losses    
+    #return optimal_lambda
 
 def error(y, tx, w):
     predictions = np.sign(np.dot(tx,w))
@@ -225,5 +255,3 @@ def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
             break
     
     return loss, w
-    
-    pass
