@@ -164,24 +164,18 @@ def find_optimal_lambda(y,tx):
     # split data in k fold
     k_indices = build_k_indices(y, k_fold, seed)
     
-    training_losses = []
     testing_losses = []
     
     for i, lambda_ in enumerate(lambdas):
         print("Iteration {}".format(i))
-        loss_tr_sum = 0
         loss_te_sum = 0
         for k in range(k_fold):
-            loss_tr, loss_te = cross_validation(y,tx,k_indices,k,lambda_)
-            loss_tr_sum += loss_tr
+            _, loss_te = cross_validation(y,tx,k_indices,k,lambda_)
             loss_te_sum += loss_te
-        training_losses.append(loss_tr_sum/k_fold)
-        testing_losses.append(loss_te_sum/k_fold)
-        # testing_losses.append((loss_te_sum/k_fold,lambda_))
+        testing_losses.append((loss_te_sum/k_fold,lambda_))
         
-    # optimal_lambda = min(testing_losses)[1]
-    return lambdas, training_losses, testing_losses    
-    #return optimal_lambda
+    optimal_lambda = min(testing_losses)[1]    
+    return optimal_lambda
 
 def error(y, tx, w):
     predictions = np.sign(np.dot(tx,w))
@@ -235,6 +229,41 @@ def logistic_regression(y, tx, initial_w, max_iters, gamma):
     
     return loss, w
 
+def log_cross_validation(y, tx, k_indices, k, lambda_, initial_w, max_iters, gamma):
+    """return the loss of ridge regression."""
+    # get k'th subgroup in test, others in train
+    tx_test = tx[k_indices[k]]
+    y_test = y[k_indices[k]]
+    train_indices = np.array([i for i in range(y.size) if i not in k_indices[k]])
+    tx_train = tx[train_indices]
+    y_train = y[train_indices]
+    
+    # regularized logistic regression
+    loss_tr, ws_train = reg_logistic_regression(y_train, tx_train, lambda_, initial_w, max_iters, gamma)
+    
+    # calculate the loss for test data
+    loss_te = logistic_loss(y_test,tx_test,ws_train)
+    return loss_tr, loss_te
+
+def log_optimal_lambda(y,tx,initial_w, max_iters, gamma):
+    seed = 1
+    k_fold = 4
+    lambdas = np.logspace(-4, 0, 30)
+    # split data in k fold
+    k_indices = build_k_indices(y, k_fold, seed)
+    
+    testing_losses = []
+    
+    for i, lambda_ in enumerate(lambdas):
+        print("Iteration {}".format(i))
+        loss_te_sum = 0
+        for k in range(k_fold):
+            _, loss_te = log_cross_validation(y,tx,k_indices,k,lambda_,initial_w,max_iters,gamma)
+            loss_te_sum += loss_te
+        testing_losses.append((loss_te_sum/k_fold,lambda_))
+        
+    optimal_lambda = min(testing_losses)[1]    
+    return optimal_lambda
 
 def reg_logistic_regression(y, tx, lambda_, initial_w, max_iters, gamma):
     """ Regularized logistic regression using gradient descent or SGD """
