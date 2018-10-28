@@ -1,26 +1,29 @@
-
-from benchmark_methods import model_output, compute_predictions, logistic_predictions
-from proj1_helpers import *
-import numpy as np
 import csv
+import numpy as np
+import sys
+from proj1_helpers import load_csv_data, create_csv_submission, model_predictions
 
-test_data_path = 'all/test.csv'
-test = load_csv_data(test_data_path)
-_, test_data, test_ids, _ = test
+"""
+run.py is used to launch the application of weights on a test dataset and serialize the results.
+"""
 
-weights_path = 'all/weights.npy'
-weights = np.load(weights_path)
+def load_npy(*npy_paths):
+    """
+    Returns numpy arrays serialized at npy_paths.
+    Args:
+        npy_paths : a sequence of serialized np.arrays files paths.
+    Returns:
+        Deserialized numpy arrays
+    """
+    return (np.load(p) for p in npy_paths)
 
-clean_features_path = 'all/clean_features.npy'
-clean_features = np.load(clean_features_path)
+# Load the test dataset
+_, test_data, test_ids, _ = load_csv_data('all/test.csv')
 
-parameters_path = 'all/parameters.npy'
-parameters = np.load(parameters_path)
+# Load the weights, feature masks and parameters (mean, std_dev)
+weights, clean_features, parameters = load_npy('all/weights.npy', 'all/clean_features.npy', 'all/parameters.npy')
 
-out = model_output(test_data, weights, 22, clean_features, parameters)
+# Runs the weights against the test dataset
+predictions = model_predictions(test_data, weights, 22, clean_features, parameters)
 
-#TODO how to not manualy have to change? 
-#pred = logistic_predictions(out)
-pred = compute_predictions(out)
-
-create_csv_submission(test_ids, pred, 'all/ridge_pred.csv')
+create_csv_submission(test_ids, predictions, 'all/predictions.csv')
