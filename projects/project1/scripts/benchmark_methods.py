@@ -18,12 +18,12 @@ def extend_and_standardize(input_data, mean=None, std=None):
 def compute_predictions(model_output):
     predictions = model_output
     predictions[predictions > 0.5] = 1
-    predictions[predictions <= 0.5] = 0
+    predictions[predictions <= 0.5] = -1
     return predictions
 
 def logistic_predictions(model_output):
     predictions = np.sign(model_output)
-    predictions[predictions == -1] = 0
+    predictions[predictions == 0] = -1
     return predictions
 
 def compute_accuracy(y, predictions):
