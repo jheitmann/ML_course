@@ -45,8 +45,12 @@ def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters):
         weight = ws[pri_jet_num]
         select_features = clean_features[pri_jet_num]
         reduced_dset = tx[cond][:,select_features]
+        poly_dset = build_poly(reduced_dset,3)
         mean, std = parameters[pri_jet_num]
-        extended_dset,_,_ = extend_and_standardize(reduced_dset,mean,std)
+        extended_dset, _, _ = extend_and_standardize(poly_dset[:,1:],mean,std)
+        # extended_dset, _, _ = extend_and_standardize(reduced_dset,mean,std)
+        # Polynomial expansion
+        # extended_dset = build_poly(extended_dset[:,1:], 3)
         sub_prediction = predict_labels(weight,extended_dset)
         model_predictions[cond] = sub_prediction
         
@@ -79,6 +83,13 @@ def build_model_data(x):
     num_samples = x.shape[0]
     tx = np.c_[np.ones(num_samples), x]
     return tx
+
+def build_poly(x, degree):
+    """polynomial basis functions for input data x, for j=0 up to j=degree."""
+    poly = np.ones((len(x), 1))
+    for deg in range(1, degree+1):
+        poly = np.c_[poly, np.power(x, deg)]
+    return poly
 
 def extend_and_standardize(input_data, mean=None, std=None):
     if mean is not None and std is not None:
