@@ -14,6 +14,7 @@ Machine Learning, Project 1
     This file contains the code that generates results.csv, which contains our best model predictions for the testing dataset.
   - benchmark.ipynb
     This notebook contains our history of training models and testing their accuracy, with increasing levels of feature processing, searching for the best performance. It is loosely chronologiscal, from earlier tries to later ones at the bottom.
-
+  - proj1_helpers.py
+    This file contains the original helper methods and new methods made to modularize our code.
 ### Reusability
 ...
