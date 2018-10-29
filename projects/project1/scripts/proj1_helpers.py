@@ -52,7 +52,7 @@ def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters):
         weight = ws[pri_jet_num]
         select_features = clean_features[pri_jet_num]
         reduced_dset = tx[cond][:,select_features]
-        poly_dset = build_poly(reduced_dset,1)
+        poly_dset = build_poly(reduced_dset,2)
         mean, std = parameters[pri_jet_num]
         extended_dset, _, _ = extend_and_standardize(poly_dset[:,1:],mean,std)
         sub_prediction = predict_labels(weight,extended_dset)
@@ -100,7 +100,7 @@ def extend_and_standardize(input_data, mean=None, std=None):
     This method extends the input_data to matrix form and computes the means and stds.
     If mean and std are provided, it does not recompute those statistics and uses them instead.
     """    
-    if mean and std:
+    if mean is not None and std is not None:
         mean_x = mean
         std_x = std
         tx = (input_data - mean) / std
