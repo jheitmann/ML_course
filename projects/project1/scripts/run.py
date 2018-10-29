@@ -25,7 +25,7 @@ weights, clean_features, parameters = load_npy('all/weights.npy', 'all/clean_fea
 
 # Runs the weights against the test dataset
 pri_jet_num_idx = 22
-polynomial_degree = 8
+polynomial_degree = 3
 predictions = model_predictions(test_data, weights, pri_jet_num_idx, clean_features, parameters, polynomial_degree)
 
 create_csv_submission(test_ids, predictions, 'all/predictions.csv')

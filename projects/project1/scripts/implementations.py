@@ -51,7 +51,8 @@ def least_squares_loss(y, tx, w):
 def logistic_loss(y, tx, w):
     """compute the cost by negative log likelihood."""
     pred = sigmoid(tx.dot(w))
-    pred[pred == 1] = 1 - 1e-8 # No nan when log(1-pred) is computed
+    pred[pred == 0] = 1e-10 # No nan when log(pred) is computed
+    pred[pred == 1] = 1 - 1e-10 # No nan when log(1-pred) is computed
     loss = (-y * np.log(pred) - (1. - y) * np.log(1. - pred)).mean()
     return loss
 
