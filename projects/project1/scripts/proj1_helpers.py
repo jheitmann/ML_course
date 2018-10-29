@@ -30,7 +30,6 @@ def predict_labels(weights, data):
     y_pred = np.dot(data, weights)
     y_pred[np.where(y_pred <= 0)] = -1
     y_pred[np.where(y_pred > 0)] = 1
-    
     return y_pred
 
 def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters):
@@ -48,9 +47,6 @@ def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters):
         poly_dset = build_poly(reduced_dset,3)
         mean, std = parameters[pri_jet_num]
         extended_dset, _, _ = extend_and_standardize(poly_dset[:,1:],mean,std)
-        # extended_dset, _, _ = extend_and_standardize(reduced_dset,mean,std)
-        # Polynomial expansion
-        # extended_dset = build_poly(extended_dset[:,1:], 3)
         sub_prediction = predict_labels(weight,extended_dset)
         model_predictions[cond] = sub_prediction
         
