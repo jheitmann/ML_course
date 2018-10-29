@@ -32,7 +32,7 @@ def predict_labels(weights, data):
     y_pred[np.where(y_pred > 0)] = 1
     return y_pred
 
-def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters):
+def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters, degree):
     """ Generates predictions for the given weights applied to the given samples.
     Arguments:
         tx: matrix form sample data to predict
@@ -52,10 +52,10 @@ def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters):
         weight = ws[pri_jet_num]
         select_features = clean_features[pri_jet_num]
         reduced_dset = tx[cond][:,select_features]
-        poly_dset = build_poly(reduced_dset,2)
+        poly_dset = build_poly(reduced_dset, degree)
         mean, std = parameters[pri_jet_num]
-        extended_dset, _, _ = extend_and_standardize(poly_dset[:,1:],mean,std)
-        sub_prediction = predict_labels(weight,extended_dset)
+        extended_dset, _, _ = extend_and_standardize(poly_dset[:,1:], mean, std)
+        sub_prediction = predict_labels(weight, extended_dset)
         model_predictions[cond] = sub_prediction
         
     return model_predictions
