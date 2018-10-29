@@ -33,6 +33,14 @@ def predict_labels(weights, data):
     return y_pred
 
 def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters):
+    """ Generates predictions for the given weights applied to the given samples.
+    Arguments:
+        tx: matrix form sample data to predict
+        ws: weights used to predict
+        pri_jet_num_idx: the index of the pri_jet_num feature in tx, for splitting
+        clean_features: features that do not contained undefined values
+        parameters: (mean, std) of features prior to standardization
+    """
     cond_null = tx[:, pri_jet_num_idx] == 0
     cond_one = tx[:, pri_jet_num_idx] == 1
     cond_plural = tx[:, pri_jet_num_idx] >= 2
@@ -44,7 +52,7 @@ def model_predictions(tx, ws, pri_jet_num_idx, clean_features, parameters):
         weight = ws[pri_jet_num]
         select_features = clean_features[pri_jet_num]
         reduced_dset = tx[cond][:,select_features]
-        poly_dset = build_poly(reduced_dset,3)
+        poly_dset = build_poly(reduced_dset,1)
         mean, std = parameters[pri_jet_num]
         extended_dset, _, _ = extend_and_standardize(poly_dset[:,1:],mean,std)
         sub_prediction = predict_labels(weight,extended_dset)
@@ -75,20 +83,24 @@ def standardize(x):
     return x, mean_x, std_x
 
 def build_model_data(x):
-    """Form (y,tX) to get regression data in matrix form."""
+    """ Form (y, tX) to get regression data in matrix form."""
     num_samples = x.shape[0]
     tx = np.c_[np.ones(num_samples), x]
     return tx
 
 def build_poly(x, degree):
-    """polynomial basis functions for input data x, for j=0 up to j=degree."""
+    """ Polynomial basis functions for input data x, for j=0 up to j=degree."""
     poly = np.ones((len(x), 1))
     for deg in range(1, degree+1):
         poly = np.c_[poly, np.power(x, deg)]
     return poly
 
 def extend_and_standardize(input_data, mean=None, std=None):
-    if mean is not None and std is not None:
+    """
+    This method extends the input_data to matrix form and computes the means and stds.
+    If mean and std are provided, it does not recompute those statistics and uses them instead.
+    """    
+    if mean and std:
         mean_x = mean
         std_x = std
         tx = (input_data - mean) / std
@@ -100,7 +112,7 @@ def extend_and_standardize(input_data, mean=None, std=None):
     return tx, mean_x, std_x
 
 def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
-    """ Generate a minibatch iterator for a dataset. """
+    """ Generates a minibatch iterator for a dataset. """
     data_size = len(y)
 
     if shuffle:
@@ -117,7 +129,7 @@ def batch_iter(y, tx, batch_size, num_batches=1, shuffle=True):
             yield shuffled_y[start_index:end_index], shuffled_tx[start_index:end_index]
             
 def split_data(x, y, ratio, myseed=1):
-    """split the dataset based on the split ratio."""
+    """ Splits the dataset based on the split ratio, uses myseed for the random selection of indices """    
     # set seed
     np.random.seed(myseed)
     # generate random indices
@@ -134,7 +146,10 @@ def split_data(x, y, ratio, myseed=1):
     return x_tr, x_te, y_tr, y_te
 
 def build_k_indices(y, k_fold, seed):
-    """build k indices for k-fold."""
+    """
+    Builds k indices for k-fold.
+    This is explained further under cross-validation for hyperparameters in the report pdf.
+    """
     num_row = y.shape[0]
     interval = int(num_row / k_fold)
     np.random.seed(seed)
