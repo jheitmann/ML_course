@@ -106,3 +106,12 @@ ENV/
 *.fdb_latexmk
 *.synctex.gz
 *.tex
+
+#Trucs louis
+projects/project2/project_road_segmentation/datasets
+projects/project1/README.txt
+projects/project1/scripts/all/
+projects/project1/scripts/report_notebooks/
+projects/project1/scripts/submit/
+projects/project1/scripts/submition.zip
+*.vscode*
