@@ -5,8 +5,8 @@ sys.path.append("./models/research/slim/")
 from deeplab import train
 
 TF_INITIAL_CKPT = "initial_ckpts/deeplabv3_pascal_train_aug/model.ckpt"
-TRAIN_LOGDIR_PROJ = "datasets/proj_dataset/training/train_outputs/"
-DATASET_DIR_PROJ = "datasets/proj_dataset/training/tfrecord/"
+TRAIN_LOGDIR_PROJ = "train_output/"
+DATASET_DIR_PROJ = "tfrec_output/"
 TRAIN_LOGDIR_VOC = "datasets/pascal_voc_seg/exp/train_on_train_set/train/"
 DATASET_DIR_VOC = "datasets/pascal_voc_seg/tfrecord/"
 
@@ -22,6 +22,9 @@ train.FLAGS.dataset="pascal_voc_seg"
 train.FLAGS.tf_initial_checkpoint=TF_INITIAL_CKPT
 train.FLAGS.train_logdir=TRAIN_LOGDIR_PROJ
 train.FLAGS.dataset_dir=DATASET_DIR_PROJ
+train.FLAGS.log_steps = 1 #number of steps before logging to console (I like a log every step)
+train.FLAGS.save_interval_secs = 60 #number of seconds before saving a model checkpoint
+train.FLAGS.save_summaries_secs = 60 #number of seconds before saving a summary for tensorboard
 
 train.main(None)
 

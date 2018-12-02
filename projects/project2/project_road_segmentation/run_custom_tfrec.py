@@ -10,8 +10,8 @@ class PARAM:
     output_dir = "tfrec_output"
     train_image_folder = "datasets/roadseg/images" # Training dataset images root
     train_image_label_folder = "datasets/roadseg/groundtruth/" # and their masks
-    val_image_folder = "datasets/roadseg/images"  # For later, need to also use validation/testing images
-    val_image_label_folder = "datasets/roadseg/groundtruth/"  # and their masks
+    val_image_folder = "datasets/roadseg/test_set_images/test_all/"  # For later, need to also use validation/testing images
+    val_image_label_folder = "datasets/roadseg/test_set_images/test_all/"  # and their masks
     num_shards = 1 # Number of shards of dataset (mostly useful for distributed training, we don't need more than 1)
     image_nchannels = 3 # Channels in image : 3 for (R, G, B), 4 if alpha channel
     label_nchannels = 1  # Channels in masks (works with 1 but not sure if really is 1)
@@ -57,8 +57,8 @@ def _convert_dataset(tfrec_name, dataset_dir, dataset_label_dir):
 
 def main():
     tf.gfile.MakeDirs(PARAM.output_dir)
-    _convert_dataset('train', PARAM.train_image_folder, PARAM.train_image_label_folder)
-    #_convert_dataset('val', FLAGS.val_image_folder, FLAGS.val_image_label_folder)
+    #_convert_dataset('train', PARAM.train_image_folder, PARAM.train_image_label_folder)
+    _convert_dataset('val', PARAM.val_image_folder, PARAM.val_image_label_folder)
 
 if __name__ == '__main__':
     main()
