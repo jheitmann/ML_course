@@ -352,11 +352,11 @@ def main(argv=None):  # pylint: disable=unused-argument
                               padding='SAME')
 
         # Uncomment these lines to check the size of each layer
-        # print 'data ' + str(data.get_shape())
-        # print 'conv ' + str(conv.get_shape())
-        # print 'relu ' + str(relu.get_shape())
-        # print 'pool ' + str(pool.get_shape())
-        # print 'pool2 ' + str(pool2.get_shape())
+        print('data ' + str(data.get_shape()))
+        print('conv ' + str(conv.get_shape()))
+        print('relu ' + str(relu.get_shape()))
+        print('pool ' + str(pool.get_shape()))
+        print('pool2 ' + str(pool2.get_shape()))
 
 
         # Reshape the feature map cuboid into a 2D matrix to feed it to the
@@ -391,7 +391,7 @@ def main(argv=None):  # pylint: disable=unused-argument
 
     # Training computation: logits + cross-entropy loss.
     logits = model(train_data_node, True) # BATCH_SIZE*NUM_LABELS
-    # print 'logits = ' + str(logits.get_shape()) + ' train_labels_node = ' + str(train_labels_node.get_shape())
+    print('logits = ' + str(logits.get_shape()) + ' train_labels_node = ' + str(train_labels_node.get_shape()))
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
         logits=logits, labels=train_labels_node))
     tf.summary.scalar('loss', loss)
@@ -453,6 +453,9 @@ def main(argv=None):  # pylint: disable=unused-argument
             summary_op = tf.summary.merge_all()
             summary_writer = tf.summary.FileWriter(FLAGS.train_dir,
                                                     graph_def=s.graph_def)
+
+            # Print the summary 
+
             print ('Initialized!')
             # Loop through training steps.
             print ('Total number of iterations = ' + str(int(num_epochs * train_size / BATCH_SIZE)))
