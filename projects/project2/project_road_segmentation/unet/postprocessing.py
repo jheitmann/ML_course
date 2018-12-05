@@ -2,6 +2,7 @@ import matplotlib.image as mpimg
 import numpy as np
 from PIL import Image
 
+
 PIXEL_DEPTH = 255
 IMG_PATCH_SIZE = 16
 
