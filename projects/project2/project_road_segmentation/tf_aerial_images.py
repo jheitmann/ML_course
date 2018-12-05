@@ -143,7 +143,7 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
     idx = 0
     for i in range(0,imgheight,h):
         for j in range(0,imgwidth,w):
-            if labels[idx][0] > 0.5:
+            if labels[idx][1] > 0.5:
                 l = 1
             else:
                 l = 0

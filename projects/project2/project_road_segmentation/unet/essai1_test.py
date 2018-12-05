@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import skimage.io as io
@@ -6,13 +5,14 @@ import skimage.transform as trans
 from model import unet, ModelCheckpoint
 from data import testGeneratorAlt, saveResult, saveResultAlt, labelVisualize
 
-CKPT_FILENAME = "essai1.hdf5"
-TEST_FOLDER = "data/roadseg/testLS"
+CKPT_FILENAME = "results/essai1.hdf5"
+TEST_FOLDER = "data/test/image" # data/train/image
 N_TESTS = 50
 
-model = unet()
-model_checkpoint = ModelCheckpoint(filepath=CKPT_FILENAME, verbose=1, save_best_only=True)
-model.load_weights(CKPT_FILENAME)
+model = unet(CKPT_FILENAME)
+# model = unet()
+# model_checkpoint = ModelCheckpoint(filepath=CKPT_FILENAME, verbose=1, save_best_only=True)
+# model.load_weights(CKPT_FILENAME)
 #testGene = testGeneratorAlt(TEST_FOLDER)
 
 TARGET_SIZE = (256,256)
