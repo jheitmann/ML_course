@@ -19,6 +19,6 @@ N_STEPS_PER_EPOCH = 50 # 500
 N_EPOCH = 3 # 5
 myGene = trainGenerator(BATCH_SIZE, DS_PATH, IMG_SUBFOLDER, MSK_SUBFOLDER, data_gen_args, save_to_dir=AUG_SUBFOLDER)
 
-model = unet()
+model = unet(input_size=(400,400,3))
 model_checkpoint = ModelCheckpoint(CKPT_FILENAME, monitor='loss',verbose=1, save_best_only=True)
 model.fit_generator(myGene, steps_per_epoch=N_STEPS_PER_EPOCH, epochs=N_EPOCH, callbacks=[model_checkpoint])

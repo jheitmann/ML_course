@@ -108,10 +108,22 @@ ENV/
 *.tex
 
 #Trucs louis
+projects/project2/project_road_segmentation/submission/patch_thres/
+projects/project2/project_road_segmentation/submission/pixel_thres/
+projects/project2/project_road_segmentation/submission/resized/
+projects/project2/project_road_segmentation/unet/data
+projects/project2/project_road_segmentation/unet/img
+projects/project2/project_road_segmentation/unet/*.hdf5
 projects/project2/project_road_segmentation/datasets
+projects/project2/project_road_segmentation/deeplab/eval_output/
+projects/project2/project_road_segmentation/deeplab/eval_dataset/
+projects/project2/project_road_segmentation/deeplab/initial_ckpts/
+projects/project2/project_road_segmentation/deeplab/tfrec_output/
+projects/project2/project_road_segmentation/deeplab/train_output/
 projects/project1/README.txt
 projects/project1/scripts/all/
 projects/project1/scripts/report_notebooks/
 projects/project1/scripts/submit/
 projects/project1/scripts/submition.zip
 *.vscode*
+*.hd5f

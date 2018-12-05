@@ -17,5 +17,5 @@ if __name__=="__main__":
     Script console usage example :
     python resize.py old_images 512 512 new_images
     """
-    input_folder, (w, h), output_folder = sys.argv
-    resize(input_folder, output_folder, w, h)
+    _, input_folder, w, h, output_folder = sys.argv
+    resize(input_folder, output_folder, (w, h))
