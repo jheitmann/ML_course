@@ -25,6 +25,7 @@ for i, f in enumerate(os.listdir(TEST_FOLDER)[:N_TESTS]):
     img = trans.resize(img, TARGET_SIZE)
     img = np.reshape(img, img.shape + (1,)) if (not FLAG_MULTI_CLASS) else img
     img = np.reshape(img, (1,) + img.shape)
+    print((1,) + img.shape)
 
     result = model.predict(img, verbose=1)
     print(result.shape)

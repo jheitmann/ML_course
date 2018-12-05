@@ -14,7 +14,7 @@ TEST_RESULTS_PATH = "../unet/data/roadseg/test_res_4"
 
 
 def resize_one(im):
-    imr = im.resize((400, 400), Image.ANTIALIAS)
+    imr = im.resize((608, 608), Image.ANTIALIAS)
     return imr
 
 def pixel_thres_one(im):
