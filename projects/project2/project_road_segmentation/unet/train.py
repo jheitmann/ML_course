@@ -29,7 +29,7 @@ batch_size = args.batch_size
 epochs = args.epochs
 validation_split = args.validation_split
 
-print("Training on images of size {height}*{height} with {channel} input channel(s).".format(height=img_height, channel=n_channels))
+print(f"Training on images of size {img_height}*{img_height} with {n_channels} input channel(s).")
 
 if (not args.augmented):
     print("Using raw data for training")

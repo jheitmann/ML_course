@@ -32,7 +32,7 @@ def extract_data(filename, num_images, img_height, as_rgb):
         if os.path.isfile(image_filename):
             print ('Loading ' + image_filename)
             img = cv2.imread(image_filename, as_rgb)
-            img = cv2.resize(img, (img_height, img_height)) # interpolation=cv2.INTER_CUBIC
+            img = cv2.resize(img, dsize=(img_height, img_height), interpolation=cv2.INTER_AREA)
             if not as_rgb:
                 img = img[..., np.newaxis]
             img = img.astype('float32')
