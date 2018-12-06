@@ -1,3 +1,4 @@
+import cv2
 import matplotlib.image as mpimg
 import numpy as np
 from PIL import Image
@@ -5,6 +6,7 @@ from PIL import Image
 
 PIXEL_DEPTH = 255
 IMG_PATCH_SIZE = 16
+TEST_IMG_HEIGHT = 608
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
@@ -98,3 +100,20 @@ def get_prediction_with_overlay(filename, image_idx):
     oimg = make_img_overlay(img, img_prediction)
 
     return oimg
+
+def predictions_to_masks(filename, preds, img_height):
+    num_pred = preds.shape[0]
+    preds[preds >= 0.5] = 1
+    preds[preds < 0.5] = 0
+    masks = preds * 255
+    masks = np.round(masks).astype('int32')
+    masks = np.squeeze(masks)
+    print(masks.shape)
+
+    for i in range(1, num_pred+1):
+        imageid = "test_%d" % i
+        image_filename = filename + imageid + ".png"
+        
+        print ('Predicting ' + image_filename)
+        # mask = cv2.resize(masks[i-1], (TEST_IMG_HEIGHT,TEST_IMG_HEIGHT)) # interpolation=cv2.INTER_CUBIC
+        cv2.imwrite(image_filename, masks[i-1])
