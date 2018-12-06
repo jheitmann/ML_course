@@ -103,17 +103,17 @@ def get_prediction_with_overlay(filename, image_idx):
 
 def predictions_to_masks(filename, preds, img_height):
     num_pred = preds.shape[0]
-    preds[preds >= 0.5] = 1
-    preds[preds < 0.5] = 0
+    # preds[preds >= 0.5] = 1
+    # preds[preds < 0.5] = 0
     masks = preds * 255
-    masks = np.round(masks).astype('int32')
+    masks = np.round(masks).astype('uint8')
     masks = np.squeeze(masks)
-    print(masks.shape)
 
-    for i in range(1, num_pred+1):
-        imageid = "test_%d" % i
+    for i in range(num_pred):
+        imageid = f"test_{i+1}"
         image_filename = filename + imageid + ".png"
         
         print ('Predicting ' + image_filename)
-        # mask = cv2.resize(masks[i-1], (TEST_IMG_HEIGHT,TEST_IMG_HEIGHT)) # interpolation=cv2.INTER_CUBIC
-        cv2.imwrite(image_filename, masks[i-1])
+        mask = masks[i]
+        mask = cv2.resize(mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+        cv2.imwrite(image_filename, mask)

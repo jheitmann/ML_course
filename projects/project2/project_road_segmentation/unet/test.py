@@ -8,7 +8,7 @@ from postprocessing import predictions_to_masks
 
 TESTING_PATH = "data/test/image/"
 PREDS_PATH = "results/label/"
-N_TEST_IMAGES = 10 # 50
+N_TEST_IMAGES = 50
 
 parser = argparse.ArgumentParser()
 parser.add_argument("img_height", type=int, choices=[256, 400],
