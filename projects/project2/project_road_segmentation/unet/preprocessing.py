@@ -27,7 +27,7 @@ def extract_data(filename, num_images, img_height, as_rgb):
     """
     imgs = []
     for i in range(1, num_images+1):
-        imageid = "test_%d" % i # changeme: satImage_%.3d
+        imageid = "_%.3d" % i
         image_filename = filename + imageid + ".png"
         if os.path.isfile(image_filename):
             print ('Loading ' + image_filename)

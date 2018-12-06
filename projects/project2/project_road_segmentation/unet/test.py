@@ -20,7 +20,7 @@ args = parser.parse_args()
 img_height = args.img_height
 n_channels = 3 if args.rgb_images else 1
 
-imgs = extract_data(TESTING_PATH, N_TEST_IMAGES, img_height, args.rgb_images)
+imgs = extract_data(TESTING_PATH + "test", N_TEST_IMAGES, img_height, args.rgb_images)
 
 ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if args.rgb_images else "bw", str(img_height))
 input_size = (img_height,img_height,n_channels)

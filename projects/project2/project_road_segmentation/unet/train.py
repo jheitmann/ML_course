@@ -34,7 +34,7 @@ print(f"Training on images of size {img_height}*{img_height} with {n_channels} i
 if (not args.augmented):
     print("Using raw data for training")
 
-    imgs = extract_data(TRAINING_PATH + IMG_SUBFOLDER, N_TRAIN_IMAGES, img_height, args.rgb_images)
+    imgs = extract_data(TRAINING_PATH + IMG_SUBFOLDER + "satImage", N_TRAIN_IMAGES, img_height, args.rgb_images)
     #print(imgs.shape)
     #img0 = imgs[0]
     #print(img0.shape)
