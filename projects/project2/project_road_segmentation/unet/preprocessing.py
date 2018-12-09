@@ -21,12 +21,13 @@ def img_crop(im, w, h):
             list_patches.append(im_patch)
     return list_patches
 
-def extract_data(image_path, num_images, img_height, as_rgb, *, verbose=True):
+def extract_data(image_path, image_prefix, num_images, img_height, as_rgb, *, verbose=True):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [0, 1].
     Args:
         image_path: image folder path
+        image_prefix: image name prefix, typically satImage_ or test_
         num_images: size 0 of returned tensor, ammount of extracted images
         img_height: resized image target width/height
         as_rgb: flag set True when images need to be loaded as rgb
@@ -38,7 +39,7 @@ def extract_data(image_path, num_images, img_height, as_rgb, *, verbose=True):
     """
     imgs = []
     for i in range(1, num_images+1):
-        imageid = "satImage_%.3d" % i
+        imageid = image_prefix + ("%.3d" % i)
         image_filename =  os.path.join(image_path, f"{imageid}.png")
         if not os.path.isfile(image_filename):
             raise FileNotFoundError(f"File {image_filename} does not exist.") 

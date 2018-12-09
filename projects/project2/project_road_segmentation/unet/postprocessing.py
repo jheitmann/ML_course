@@ -3,7 +3,6 @@ import matplotlib.image as mpimg
 import numpy as np
 from PIL import Image
 
-
 PIXEL_DEPTH = 255
 IMG_PATCH_SIZE = 16
 TEST_IMG_HEIGHT = 608
@@ -15,8 +14,13 @@ def error_rate(predictions, labels):
         np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) /
         predictions.shape[0])
 
-# Write predictions from neural network to a file
 def write_predictions_to_file(predictions, labels, filename):
+    """
+    Write predictions from neural network to a file
+    Args:
+        predictions: np.array with predictions
+        filename: name of file to be written into
+    """
     max_labels = np.argmax(labels, 1)
     max_predictions = np.argmax(predictions, 1)
     file = open(filename, "w")
@@ -25,13 +29,22 @@ def write_predictions_to_file(predictions, labels, filename):
         file.write(max_labels(i) + ' ' + max_predictions(i))
     file.close()
 
-# Print predictions from neural network
 def print_predictions(predictions, labels):
+    """
+    Print predictions and labels
+    """
     max_labels = np.argmax(labels, 1)
     max_predictions = np.argmax(predictions, 1)
     print (str(max_labels) + ' ' + str(max_predictions))
 
 def img_float_to_uint8(img):
+    """
+    Converts the img np.array to corresponding uint8 np.array
+    Args:
+        img: float np.array representing the img
+    Returns:
+        resulting np.array
+    """
     rimg = img - np.min(img)
     rimg = (rimg / np.max(rimg) * PIXEL_DEPTH).round().astype(np.uint8)
     return rimg
@@ -53,6 +66,14 @@ def concatenate_images(img, gt_img):
     return cimg
 
 def make_img_overlay(img, predicted_img):
+    """
+    Overlays img and predicted_img to have a superposed visualisation
+    Args:
+        img: image
+        predicted_img: label/groundtruth
+    Returns:
+        overlayed image
+    """
     w = img.shape[0]
     h = img.shape[1]
     color_mask = np.zeros((w, h, 3), dtype=np.uint8)
@@ -77,8 +98,10 @@ def get_prediction(img):
     """
     return []
 
-# Get a concatenation of the prediction and groundtruth for given input file
 def get_prediction_with_groundtruth(filename, image_idx):
+    """
+    Get a concatenation of the prediction and groundtruth for given input file
+    """
 
     imageid = "satImage_%.3d" % image_idx
     image_filename = filename + imageid + ".png"
@@ -89,8 +112,10 @@ def get_prediction_with_groundtruth(filename, image_idx):
 
     return cimg
 
-# Get prediction overlaid on the original image for given input file
 def get_prediction_with_overlay(filename, image_idx):
+    """
+    Get prediction overlaid on the original image for given input file
+    """
 
     imageid = "satImage_%.3d" % image_idx
     image_filename = filename + imageid + ".png"
@@ -102,6 +127,14 @@ def get_prediction_with_overlay(filename, image_idx):
     return oimg
 
 def predictions_to_masks(filename, preds, img_height):
+    """
+    Converts preds into an image mask, and serializes it to filename
+    Args:
+        filename: filename of serialized mask
+        preds: np.array of predictions
+        img_height: pixel size of image height        
+    """
+
     num_pred = preds.shape[0]
     # preds[preds >= 0.5] = 1
     # preds[preds < 0.5] = 0

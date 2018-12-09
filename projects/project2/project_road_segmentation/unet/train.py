@@ -3,7 +3,7 @@ import numpy as np
 import skimage.io as io
 import os
 
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, TensorBoard
 from model import unet
 from preprocessing import extract_data, extract_labels, get_train_generator
 
@@ -38,7 +38,7 @@ print(f"Training on images of size {img_height}*{img_height} with {n_channels} i
 if (not args.augmented):
     print("Using raw data for training")
 
-    imgs = extract_data(TRAIN_IMG_PATH, N_TRAIN_IMAGES, img_height, args.rgb_images)
+    imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, args.rgb_images)
     #print(imgs.shape)
     #img0 = imgs[0]
     #print(img0.shape)
@@ -61,7 +61,7 @@ if (not args.augmented):
 else:
     print("Using augmented dataset")
 
-    imgs = extract_data(TRAIN_IMG_PATH, N_TRAIN_IMAGES, img_height, args.rgb_images, verbose=False)
+    imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, args.rgb_images, verbose=False)
     
     gt_imgs = extract_labels(TRAIN_GT_PATH, N_TRAIN_IMAGES, img_height)
 
@@ -69,14 +69,15 @@ else:
     model = unet(input_size)
     ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if args.rgb_images else "bw", img_height)
     model_checkpoint = ModelCheckpoint(ckpt_file, monitor='loss', verbose=1, save_best_only=True)
-    data_gen_args = dict(rotation_range=0.2,
-                        width_shift_range=0.05,
-                        height_shift_range=0.05,
-                        shear_range=0.05,
-                        zoom_range=0.05,
+    tensorboard = TensorBoard("results/logdir", update_freq='epoch')
+    data_gen_args = dict(rotation_range=180,
+                        width_shift_range=1,#0.05
+                        height_shift_range=1,#0.05
+                        shear_range=0,#0.05
+                        zoom_range=1,#0.05
                         horizontal_flip=True,
                         fill_mode='nearest')
     save_to_dir = "data/aug"
-    steps_per_epoch = 10
+    steps_per_epoch = 100
     train_generator = get_train_generator(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args, save_to_dir=save_to_dir, target_size=(img_height, img_height))
     model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint])
