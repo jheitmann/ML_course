@@ -142,6 +142,7 @@ def predictions_to_masks(filename, preds, img_height):
     masks = np.round(masks).astype('uint8')
     masks = np.squeeze(masks)
 
+    filenames = []
     for i in range(num_pred):
         imageid = f"test_{i+1}"
         image_filename = filename + imageid + ".png"
@@ -150,3 +151,42 @@ def predictions_to_masks(filename, preds, img_height):
         mask = masks[i]
         mask = cv2.resize(mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
         cv2.imwrite(image_filename, mask)
+        filenames.append(image_filename)
+    return filenames
+
+def patch_to_label(patch, foreground_threshold=0.25):
+    """
+    Assign a label to a patch
+    """
+    df = np.mean(patch)
+    return int(df > foreground_threshold)
+
+def mask_to_submission_strings(image_filename, patch_size=16):
+    """
+    Reads a single image and outputs the strings that should go into the submission file
+    Args:
+        image_filename: filename of mask image 
+        path_size: patch size (w, h). Always 16
+    Returns:
+        yield all strings that should be serialized into the csv file corresp. to this image
+    """
+    # Get image number. Works on any image_filename like */*_1.* or */*_001.* for example.
+    img_name = image_filename.split('/')[-1]
+    img_number = int(img_name.split('_')[1].split('.')[0])
+    # Read mask into np.array
+    im = mpimg.imread(image_filename)
+    for j in range(0, im.shape[1], patch_size):
+        for i in range(0, im.shape[0], patch_size):
+            # Get patch np.array from image np.array
+            patch = im[i:i + patch_size, j:j + patch_size]
+            # Convert to corresp. label
+            label = patch_to_label(patch)
+            # Yield resulting string
+            yield ("{:03d}_{}_{},{}".format(img_number, j, i, label))
+
+def masks_to_submission(submission_filename, image_filenames):
+    """Converts images into a submission file"""
+    with open(submission_filename, 'w') as f:
+        f.write('id,prediction\n')
+        for fn in image_filenames:
+            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))

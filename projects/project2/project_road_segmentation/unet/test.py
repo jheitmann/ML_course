@@ -3,11 +3,12 @@ import numpy as np
 
 from model import unet
 from preprocessing import extract_data
-from postprocessing import predictions_to_masks
+from postprocessing import predictions_to_masks, masks_to_submission
 
 TESTING_PATH = "data/test/image/"
 PREDS_PATH = "results/label/"
 N_TEST_IMAGES = 50
+SUBM_PATH = "results/output.csv"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("img_height", type=int, choices=[256, 400],
@@ -31,7 +32,10 @@ else:
 print('ckpt', ckpt_file)
 input_size = (img_height,img_height,n_channels)
 model = unet(input_size, pretrained_weights=ckpt_file)
-print(input_size)
+print('input_size', input_size)
 preds = model.predict(imgs, batch_size=1, verbose=1)
-print(preds.shape)
-predictions_to_masks(PREDS_PATH, preds, img_height)
+print('preds shape', preds.shape)
+print('generating masks in', masks_filenames)
+masks_filenames = predictions_to_masks(PREDS_PATH, preds, img_height)
+print('generating submission at', SUBM_PATH)
+masks_to_submission(SUBM_PATH, masks_filenames)
