@@ -155,7 +155,7 @@ def predictions_to_masks(path, preds, img_height, save_logits=True, logits_path=
     logit_mask_files = []
     for i in range(num_pred):
 
-        filename = f"test_{i+1}"
+        filename = "test_%.3d" % i
 
         if save_logits:
             logits_relative_path = logits_path + filename + ".png"
