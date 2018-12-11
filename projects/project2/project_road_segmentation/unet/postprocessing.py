@@ -181,12 +181,13 @@ def patch_to_label(patch, foreground_threshold=0.25):
     df = np.mean(patch)
     return int(df > foreground_threshold)
 
-def mask_to_submission_strings(image_filename, patch_size=16):
+def mask_to_submission_strings(image_filename, patch_size=16, start_from_0=False):
     """
     Reads a single image and outputs the strings that should go into the submission file
     Args:
         image_filename: filename of mask image 
         path_size: patch size (w, h). Always 16
+        start_from_0: set True if test_000.png instead of test_001.png
     Returns:
         yield all strings that should be serialized into the csv file corresp. to this image
     """
@@ -202,11 +203,11 @@ def mask_to_submission_strings(image_filename, patch_size=16):
             # Convert to corresp. label
             label = patch_to_label(patch)
             # Yield resulting string
-            yield ("{:03d}_{}_{},{}".format(img_number, j, i, label))
+            yield ("{:03d}_{}_{},{}".format(img_number+(1 if start_from_0 else 0), j, i, label))
 
-def masks_to_submission(submission_filename, image_filenames):
+def masks_to_submission(submission_filename, image_filenames, start_from_0=False):
     """Converts images into a submission file"""
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in image_filenames:
-            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))
+            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn, start_from_0=start_from_0))
