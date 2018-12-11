@@ -126,33 +126,53 @@ def get_prediction_with_overlay(filename, image_idx):
 
     return oimg
 
-def predictions_to_masks(filename, preds, img_height):
+def predictions_to_masks(path, preds, img_height, save_logits=True, logits_path='results/logits/'):
     """
-    Converts preds into an image mask, and serializes it to filename
+    Converts preds into an image mask, and serializes it to path
     Args:
-        filename: filename of serialized mask
+        path: where predicted masks should be saved 
         preds: np.array of predictions
-        img_height: pixel size of image height        
+        img_height: pixel size of image height
+        save_logits: if true, logit masks are saved (non-binary pixel intensities) to logits_path
+        logits_path: where logits masks should be saved
     """
 
     num_pred = preds.shape[0]
-    # preds[preds >= 0.5] = 1
-    # preds[preds < 0.5] = 0
-    masks = preds * 255
-    masks = np.round(masks).astype('uint8')
-    masks = np.squeeze(masks)
 
-    filenames = []
+    pred_masks = np.zeros(preds.shape)
+    pred_masks[preds >= 0.5] = 1.0
+
+    logit_masks = preds * PIXEL_DEPTH
+    pred_masks = pred_masks * PIXEL_DEPTH
+
+    logit_masks = np.round(logit_masks).astype('uint8')
+    pred_masks = pred_masks.astype('uint8')
+
+    logit_masks = np.squeeze(logit_masks)
+    pred_masks = np.squeeze(pred_masks)
+
+    pred_mask_files = []
+    logit_mask_files = []
     for i in range(num_pred):
-        imageid = f"test_{i+1}"
-        image_filename = filename + imageid + ".png"
+
+        filename = f"test_{i+1}"
+
+        if save_logits:
+            logits_relative_path = logits_path + filename + ".png"
+            logit_mask = logit_masks[i]
+            logit_mask = cv2.resize(logit_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+            cv2.imwrite(logits_relative_path, logit_mask)
+            logit_mask_files.append(logits_relative_path)
         
-        print ('Predicting ' + image_filename)
-        mask = masks[i]
-        mask = cv2.resize(mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
-        cv2.imwrite(image_filename, mask)
-        filenames.append(image_filename)
-    return filenames
+        mask_relative_path = path + filename + ".png"
+        print ('Predicting ' + mask_relative_path)
+
+        pred_mask = pred_masks[i]
+        pred_mask = cv2.resize(pred_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+        cv2.imwrite(mask_relative_path, pred_mask)
+        pred_mask_files.append(mask_relative_path)
+
+    return pred_mask_files, logit_mask_files
 
 def patch_to_label(patch, foreground_threshold=0.25):
     """
