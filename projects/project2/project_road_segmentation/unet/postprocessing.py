@@ -181,7 +181,7 @@ def patch_to_label(patch, foreground_threshold=0.25):
     df = np.mean(patch)
     return int(df > foreground_threshold)
 
-def mask_to_submission_strings(image_filename, patch_size=16, start_from_0=False):
+def mask_to_submission_strings(image_filename, start_from_0=False):
     """
     Reads a single image and outputs the strings that should go into the submission file
     Args:
@@ -196,10 +196,10 @@ def mask_to_submission_strings(image_filename, patch_size=16, start_from_0=False
     img_number = int(img_name.split('_')[1].split('.')[0])
     # Read mask into np.array
     im = mpimg.imread(image_filename)
-    for j in range(0, im.shape[1], patch_size):
-        for i in range(0, im.shape[0], patch_size):
+    for j in range(0, im.shape[1], IMG_PATCH_SIZE):
+        for i in range(0, im.shape[0], IMG_PATCH_SIZE):
             # Get patch np.array from image np.array
-            patch = im[i:i + patch_size, j:j + patch_size]
+            patch = im[i:i + IMG_PATCH_SIZE, j:j + IMG_PATCH_SIZE]
             # Convert to corresp. label
             label = patch_to_label(patch)
             # Yield resulting string

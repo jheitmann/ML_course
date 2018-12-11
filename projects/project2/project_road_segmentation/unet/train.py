@@ -70,13 +70,7 @@ else:
     ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if args.rgb_images else "bw", img_height)
     model_checkpoint = ModelCheckpoint(ckpt_file, monitor='loss', verbose=1, save_best_only=True)
     tensorboard = TensorBoard("results/logdir", update_freq='epoch')
-    data_gen_args = dict(rotation_range=180,
-                        width_shift_range=1,#0.05
-                        height_shift_range=1,#0.05
-                        shear_range=0,#0.05
-                        zoom_range=1,#0.05
-                        horizontal_flip=True,
-                        fill_mode='nearest')
+    data_gen_args = dict(rotation_range=180, zoom_range=0.2, shear_range=0.01, horizontal_flip=True, fill_mode='reflect')
     save_to_dir = "data/aug"
     steps_per_epoch = 100
     train_generator = get_train_generator(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args, save_to_dir=save_to_dir, target_size=(img_height, img_height))
