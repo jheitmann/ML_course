@@ -71,10 +71,11 @@ else:
     model = unet(input_size)
     ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if args.rgb_images else "bw", img_height)
     model_checkpoint = ModelCheckpoint(ckpt_file, monitor='val_acc', verbose=1, save_best_only=True)
-    early_stopping = EarlyStopping(monitor='val_acc', min_delta=0, patience=2, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
+    # early_stopping = EarlyStopping(monitor='val_acc', min_delta=0, patience=2, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
     tensorboard = TensorBoard("results/logdir", update_freq='epoch')
     data_gen_args = dict(rotation_range=180, horizontal_flip=True, fill_mode='reflect', validation_split=validation_split) # shear_range = 0.01, zoom_range = 0.2
     save_to_dir = "data/train/aug"
     image_color_mode = "rgb" if args.rgb_images else "grayscale"
     train_generator, validation_generator = get_train_generator(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args, image_color_mode=image_color_mode, save_to_dir=save_to_dir, target_size=(img_height, img_height))
-    model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint, early_stopping], validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch))
+    model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch))
+    # model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint, early_stopping], validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch))
