@@ -24,26 +24,30 @@ parser.add_argument("-t", "--training", help="predict training set instead of te
                     action="store_true")                    
 args = parser.parse_args()
 
-img_height = args.img_height
-n_channels = 3 if args.rgb_images else 1
+def main(img_height, rgb, aug, t)
+    #img_height = args.img_height
+    n_channels = 3 if rgb else 1
 
-if args.training:
-    imgs = extract_data(TRAINING_PATH, "satImage_", N_TRAIN_IMAGES, img_height, args.rgb_images)
-else:
-    imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, args.rgb_images)
+    if t:
+        imgs = extract_data(TRAINING_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)
+    else:
+        imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, rgb)
 
-if not args.augmented:
-    ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if args.rgb_images else "bw", str(img_height))
-else:
-    ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if args.rgb_images else "bw", str(img_height))
+    if not aug:
+        ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if rgb else "bw", str(img_height))
+    else:
+        ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", str(img_height))
 
-print('ckpt', ckpt_file)
-input_size = (img_height,img_height,n_channels)
-model = unet(input_size, pretrained_weights=ckpt_file)
-print('input_size', input_size)
-preds = model.predict(imgs, batch_size=1, verbose=1)
-print('preds shape', preds.shape)
-print('generating predicted masks in', PREDS_PATH)
-pred_mask_files, logit_mask_files = predictions_to_masks(PREDS_PATH, preds, img_height)
-print('generating submission at', SUBM_PATH)
-masks_to_submission(SUBM_PATH, pred_mask_files, start_from_0=True)
+    print('ckpt', ckpt_file)
+    input_size = (img_height,img_height,n_channels)
+    model = unet(input_size, pretrained_weights=ckpt_file)
+    print('input_size', input_size)
+    preds = model.predict(imgs, batch_size=1, verbose=1)
+    print('preds shape', preds.shape)
+    print('generating predicted masks in', PREDS_PATH)
+    pred_mask_files, logit_mask_files = predictions_to_masks(PREDS_PATH, preds, img_height)
+    print('generating submission at', SUBM_PATH)
+    masks_to_submission(SUBM_PATH, pred_mask_files, start_from_0=True)
+
+if __name__=="__main__":
+    main(args.img_height, args.rgb, args.aug, args.training)

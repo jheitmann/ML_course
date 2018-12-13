@@ -274,6 +274,3 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     vprint("recall", recall)
     f1_score = 2/(1/precision + 1/recall)
     return f1_score
-
-f1s=compute_trainset_f1("results/baseline_training.csv", verbose=True)
-print(f1s)
