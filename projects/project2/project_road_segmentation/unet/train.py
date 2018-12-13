@@ -31,9 +31,6 @@ args = parser.parse_args()
 def main(img_height, batch_size, epochs, steps_per_epoch, rgb, aug):
     img_height = img_height
     n_channels = 3 if rgb else 1
-    batch_size = batch_size
-    epochs = epochs
-    steps_per_epoch = steps_per_epoch
     validation_split = (100 - steps_per_epoch) / 100.0
 
     print(f"Training on images of size {img_height}*{img_height} with {n_channels} input channel(s).")
