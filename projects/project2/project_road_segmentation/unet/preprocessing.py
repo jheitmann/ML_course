@@ -131,6 +131,23 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
             idx = idx + 1
     return array_labels
 
+def split_data(x, y, ratio, myseed=1):
+    """ Splits the dataset based on the split ratio, uses myseed for the random selection of indices """    
+    # set seed
+    np.random.seed(myseed)
+    # generate random indices
+    num_row = len(y)
+    indices = np.random.permutation(num_row)
+    index_split = int(np.floor(ratio * num_row))
+    index_tr = indices[: index_split]
+    index_te = indices[index_split:]
+    # create split
+    x_tr = x[index_tr]
+    x_te = x[index_te]
+    y_tr = y[index_tr]
+    y_te = y[index_te]
+    return x_tr, x_te, y_tr, y_te
+
 def convert_01(image, label):
     """
     Converts an img and mask from values in [0;255] to [0;1]
@@ -180,7 +197,7 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         f"The image path {image_folder} must NOT end with separator for some reason (ex: image/ -> image)"
     assert not label_folder.endswith(os.path.sep) and not label_folder.endswith('/'),\
         f"The label path {label_folder} must NOT end with separator for some reason (ex: label/ -> label)"
-    image_generator = image_datagen.flow_from_directory(
+    train_image_generator = image_datagen.flow_from_directory(
         train_path,
         classes=[image_folder],
         class_mode=None,
@@ -189,8 +206,9 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         batch_size=batch_size,
         save_to_dir=save_to_dir,
         save_prefix=image_save_prefix,
-        seed=seed)
-    label_generator = label_datagen.flow_from_directory(
+        seed=seed,
+        subset="training")
+    train_label_generator = label_datagen.flow_from_directory(
         train_path,
         classes=[label_folder],
         class_mode=None,
@@ -199,11 +217,33 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         batch_size=batch_size,
         save_to_dir=save_to_dir,
         save_prefix=mask_save_prefix,
-        seed=seed)
-    
+        seed=seed,
+        subset="training")
+    validation_image_generator = image_datagen.flow_from_directory(
+        train_path,
+        classes=[image_folder],
+        class_mode=None,
+        color_mode=image_color_mode,
+        target_size=target_size,
+        batch_size=batch_size,
+        save_to_dir=save_to_dir,
+        save_prefix=image_save_prefix,
+        seed=seed,
+        subset="validation")
+    validation_label_generator = label_datagen.flow_from_directory(
+        train_path,
+        classes=[label_folder],
+        class_mode=None,
+        color_mode=label_color_mode,
+        target_size=target_size,
+        batch_size=batch_size,
+        save_to_dir=save_to_dir,
+        save_prefix=mask_save_prefix,
+        seed=seed,
+        subset="validation")
     # Makes the generator function of tuples using the two flows
-    def generator():
-        for (image, label) in zip(image_generator, label_generator):
+    def generator(images, labels):
+        for (image, label) in zip(images, labels):
             yield convert_01(image, label)
 
-    return generator()
+    return generator(train_image_generator, train_label_generator), generator(validation_image_generator, validation_label_generator)

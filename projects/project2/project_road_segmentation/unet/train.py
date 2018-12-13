@@ -3,9 +3,9 @@ import numpy as np
 import skimage.io as io
 import os
 
-from keras.callbacks import ModelCheckpoint, TensorBoard
+from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from model import unet
-from preprocessing import extract_data, extract_labels, get_train_generator
+from preprocessing import extract_data, extract_labels, get_train_generator, split_data
 
 TRAINING_PATH = "data/train"
 IMG_SUBFOLDER = "image"
@@ -20,7 +20,8 @@ parser.add_argument("img_height", type=int, choices=[256, 400],
                     help="image height in pixels")
 parser.add_argument("batch_size", type=int, help="training batch size")
 parser.add_argument("epochs", type=int, help="number of training epochs")
-parser.add_argument("validation_split", type=float, help="ratio of data used to evaluate the model")
+parser.add_argument("steps_per_epoch", type=float, choices=range(1, N_TRAIN_IMAGES+1),
+                    help="number of training images per epoch")
 parser.add_argument("-rgb", "--rgb_images", help="train with 3 input channels",
                     action="store_true")
 parser.add_argument("-aug", "--augmented", help="use augmented dataset",
@@ -31,7 +32,8 @@ img_height = args.img_height
 n_channels = 3 if args.rgb_images else 1
 batch_size = args.batch_size
 epochs = args.epochs
-validation_split = args.validation_split
+steps_per_epoch = args.steps_per_epoch
+validation_split = (100 - steps_per_epoch) / 100.0
 
 print(f"Training on images of size {img_height}*{img_height} with {n_channels} input channel(s).")
 
@@ -68,10 +70,12 @@ else:
     input_size = (img_height, img_height, n_channels)
     model = unet(input_size)
     ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if args.rgb_images else "bw", img_height)
-    model_checkpoint = ModelCheckpoint(ckpt_file, monitor='loss', verbose=1, save_best_only=True)
+    model_checkpoint = ModelCheckpoint(ckpt_file, monitor='val_acc', verbose=1, save_best_only=True)
+    # early_stopping = EarlyStopping(monitor='val_acc', min_delta=0, patience=2, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
     tensorboard = TensorBoard("results/logdir", update_freq='epoch')
-    data_gen_args = dict(rotation_range=180, zoom_range=0.2, shear_range=0.01, horizontal_flip=True, fill_mode='reflect')
-    save_to_dir = "data/aug"
-    steps_per_epoch = 100
-    train_generator = get_train_generator(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args, save_to_dir=save_to_dir, target_size=(img_height, img_height))
-    model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint])
+    data_gen_args = dict(rotation_range=180, horizontal_flip=True, fill_mode='reflect', validation_split=validation_split) # shear_range = 0.01, zoom_range = 0.2
+    save_to_dir = "data/train/aug"
+    image_color_mode = "rgb" if args.rgb_images else "grayscale"
+    train_generator, validation_generator = get_train_generator(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args, image_color_mode=image_color_mode, save_to_dir=save_to_dir, target_size=(img_height, img_height))
+    model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch))
+    # model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint, early_stopping], validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch))

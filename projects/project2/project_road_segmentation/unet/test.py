@@ -4,10 +4,13 @@ import numpy as np
 from model import unet
 from preprocessing import extract_data
 from postprocessing import predictions_to_masks, masks_to_submission
+import os
 
 TESTING_PATH = "data/test/image/"
+TRAINING_PATH = "data/train/image/"
 PREDS_PATH = "results/label/"
 N_TEST_IMAGES = 50
+N_TRAIN_IMAGES = 100
 SUBM_PATH = "results/output.csv"
 
 parser = argparse.ArgumentParser()
@@ -17,12 +20,17 @@ parser.add_argument("-rgb", "--rgb_images", help="train with 3 input channels",
                     action="store_true")
 parser.add_argument("-aug", "--augmented", help="use augmented dataset",
                     action="store_true")
+parser.add_argument("-t", "--training", help="predict training set instead of testing",
+                    action="store_true")                    
 args = parser.parse_args()
 
 img_height = args.img_height
 n_channels = 3 if args.rgb_images else 1
 
-imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, args.rgb_images)
+if args.training:
+    imgs = extract_data(TRAINING_PATH, "satImage_", N_TRAIN_IMAGES, img_height, args.rgb_images)
+else:
+    imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, args.rgb_images)
 
 if not args.augmented:
     ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if args.rgb_images else "bw", str(img_height))

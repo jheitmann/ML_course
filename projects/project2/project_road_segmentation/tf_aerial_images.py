@@ -24,11 +24,12 @@ import tensorflow as tf
 NUM_CHANNELS = 3 # RGB images
 PIXEL_DEPTH = 255
 NUM_LABELS = 2
-TRAINING_SIZE = 20
-VALIDATION_SIZE = 5  # Size of the validation set.
+TRAINING_SIZE = 90
+VALIDATION_SIZE = 10  # Size of the validation set.
+TESTING_SIZE = 50
 SEED = 66478  # Set to None for random seed.
-BATCH_SIZE = 16 # 64
-NUM_EPOCHS = 5
+BATCH_SIZE = 64 # 64
+NUM_EPOCHS = 15 # 10
 RESTORE_MODEL = False # If True, restore existing model instead of training a new one
 RECORDING_STEP = 1000
 
@@ -37,7 +38,7 @@ RECORDING_STEP = 1000
 # image size should be an integer multiple of this number!
 IMG_PATCH_SIZE = 16
 
-tf.app.flags.DEFINE_string('train_dir', '/tmp/mnist',
+tf.app.flags.DEFINE_string('train_dir', 'baseline',
                            """Directory where to write event logs """
                            """and checkpoint.""")
 FLAGS = tf.app.flags.FLAGS
@@ -300,19 +301,20 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Get a concatenation of the prediction and groundtruth for given input file
     def get_prediction_with_groundtruth(filename, image_idx):
 
-        imageid = "satImage_%.3d" % image_idx
+        imageid = "test_%.3d" % image_idx
         image_filename = filename + imageid + ".png"
         img = mpimg.imread(image_filename)
 
         img_prediction = get_prediction(img)
+        img_prediction8 = img_float_to_uint8(img_prediction)
         cimg = concatenate_images(img, img_prediction)
 
-        return cimg
+        return img_prediction8, cimg
 
     # Get prediction overlaid on the original image for given input file
     def get_prediction_with_overlay(filename, image_idx):
 
-        imageid = "satImage_%.3d" % image_idx
+        imageid = "test_%.3d" % image_idx
         image_filename = filename + imageid + ".png"
         img = mpimg.imread(image_filename)
 
@@ -352,11 +354,11 @@ def main(argv=None):  # pylint: disable=unused-argument
                               padding='SAME')
 
         # Uncomment these lines to check the size of each layer
-        print('data ' + str(data.get_shape()))
-        print('conv ' + str(conv.get_shape()))
-        print('relu ' + str(relu.get_shape()))
-        print('pool ' + str(pool.get_shape()))
-        print('pool2 ' + str(pool2.get_shape()))
+        #print('data ' + str(data.get_shape()))
+        #print('conv ' + str(conv.get_shape()))
+        #print('relu ' + str(relu.get_shape()))
+        #print('pool ' + str(pool.get_shape()))
+        #print('pool2 ' + str(pool2.get_shape()))
 
 
         # Reshape the feature map cuboid into a 2D matrix to feed it to the
@@ -509,15 +511,20 @@ def main(argv=None):  # pylint: disable=unused-argument
                 print("Model saved in file: %s" % save_path)
 
 
-        print ("Running prediction on training set")
-        prediction_training_dir = "predictions_training/"
-        if not os.path.isdir(prediction_training_dir):
-            os.mkdir(prediction_training_dir)
-        for i in range(1, TRAINING_SIZE+1):
-            pimg = get_prediction_with_groundtruth(train_data_filename, i)
-            Image.fromarray(pimg).save(prediction_training_dir + "prediction_" + str(i) + ".png")
-            oimg = get_prediction_with_overlay(train_data_filename, i)
-            oimg.save(prediction_training_dir + "overlay_" + str(i) + ".png")       
+        print ("Running prediction on testing set")
+        prediction_testing_dir = "predictions_testing/"
+        if not os.path.isdir(prediction_testing_dir):
+            os.mkdir(prediction_testing_dir)
+            os.mkdir(prediction_testing_dir + "label/")
+            os.mkdir(prediction_testing_dir + "concat/")
+            os.mkdir(prediction_testing_dir + "overlay/")
+        for i in range(1, TESTING_SIZE+1):
+            test_data_filename = "unet/data/test/image/"
+            img_prediction, pimg = get_prediction_with_groundtruth(test_data_filename, i)
+            Image.fromarray(img_prediction).save(prediction_testing_dir + "label/" + "test_" + str(i) + ".png")
+            Image.fromarray(pimg).save(prediction_testing_dir + "concat/" + "prediction_" + str(i) + ".png")
+            oimg = get_prediction_with_overlay(test_data_filename, i)
+            oimg.save(prediction_testing_dir + "overlay/" + "overlay_" + str(i) + ".png")       
 
 if __name__ == '__main__':
     tf.app.run()
