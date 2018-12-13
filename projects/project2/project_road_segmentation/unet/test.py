@@ -24,7 +24,7 @@ parser.add_argument("-t", "--training", help="predict training set instead of te
                     action="store_true")                    
 args = parser.parse_args()
 
-def main(img_height, rgb, aug, t)
+def main(img_height, rgb, aug, t):
     #img_height = args.img_height
     n_channels = 3 if rgb else 1
 
@@ -50,4 +50,4 @@ def main(img_height, rgb, aug, t)
     masks_to_submission(SUBM_PATH, pred_mask_files, start_from_0=True)
 
 if __name__=="__main__":
-    main(args.img_height, args.rgb, args.aug, args.training)
+    main(args.img_height, args.rgb_images, args.augmented, args.training)
