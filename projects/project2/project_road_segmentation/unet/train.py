@@ -5,7 +5,7 @@ import os
 
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from model import unet
-from preprocessing import extract_data, extract_labels, get_train_generator, split_data
+from preprocessing import extract_data, extract_labels, get_generators, split_data
 
 TRAINING_PATH = "data/train"
 IMG_SUBFOLDER = "image"
@@ -56,16 +56,16 @@ if (not args.augmented):
     input_size = (img_height, img_height, n_channels)
     model = unet(input_size)
     ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if args.rgb_images else "bw", img_height)
-    model_checkpoint = ModelCheckpoint(ckpt_file, monitor='loss', verbose=1, save_best_only=True)
+    model_checkpoint = ModelCheckpoint(ckpt_file, monitor='val_acc', verbose=1, save_best_only=True)
     model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
                   validation_split=validation_split, shuffle=True, callbacks=[model_checkpoint]) # shuffle=False
     
 else:
     print("Using augmented dataset")
 
-    imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, args.rgb_images, verbose=False)
+    # imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, args.rgb_images, verbose=False)
     
-    gt_imgs = extract_labels(TRAIN_GT_PATH, N_TRAIN_IMAGES, img_height)
+    # gt_imgs = extract_labels(TRAIN_GT_PATH, N_TRAIN_IMAGES, img_height)
 
     input_size = (img_height, img_height, n_channels)
     model = unet(input_size)
@@ -73,9 +73,10 @@ else:
     model_checkpoint = ModelCheckpoint(ckpt_file, monitor='val_acc', verbose=1, save_best_only=True)
     # early_stopping = EarlyStopping(monitor='val_acc', min_delta=0, patience=2, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
     tensorboard = TensorBoard("results/logdir", update_freq='epoch')
-    data_gen_args = dict(rotation_range=180, horizontal_flip=True, fill_mode='reflect', validation_split=validation_split) # shear_range = 0.01, zoom_range = 0.2
-    save_to_dir = "data/train/aug"
-    image_color_mode = "rgb" if args.rgb_images else "grayscale"
-    train_generator, validation_generator = get_train_generator(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args, image_color_mode=image_color_mode, save_to_dir=save_to_dir, target_size=(img_height, img_height))
+    data_gen_args = dict(rotation_range=90, fill_mode='reflect', horizontal_flip=True, vertical_flip=True, validation_split=validation_split) # shear_range = 0.01, zoom_range = 0.2
+    save_to_dir = "data/train/aug/"
+    color_mode = "rgb" if args.rgb_images else "grayscale"
+    # train_generator, validation_generator = get_train_generator(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args, image_color_mode=image_color_mode, save_to_dir=save_to_dir, target_size=(img_height, img_height))
+    train_generator, validation_generator = get_generators(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args, target_size=(img_height,img_height), color_mode=color_mode, save_to_dir=save_to_dir)
     model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch))
     # model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint, early_stopping], validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch))
