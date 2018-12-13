@@ -56,7 +56,7 @@ if (not args.augmented):
     input_size = (img_height, img_height, n_channels)
     model = unet(input_size)
     ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if args.rgb_images else "bw", img_height)
-    model_checkpoint = ModelCheckpoint(ckpt_file, monitor='loss', verbose=1, save_best_only=True)
+    model_checkpoint = ModelCheckpoint(ckpt_file, monitor='val_acc', verbose=1, save_best_only=True)
     model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
                   validation_split=validation_split, shuffle=True, callbacks=[model_checkpoint]) # shuffle=False
     
