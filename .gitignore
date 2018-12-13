@@ -108,6 +108,8 @@ ENV/
 *.tex
 
 #Trucs louis
+projects/project2/project_road_segmentation/louis/
+projects/project2/project_road_segmentation/unet/results/
 projects/project2/project_road_segmentation/submission/patch_thres/
 projects/project2/project_road_segmentation/submission/pixel_thres/
 projects/project2/project_road_segmentation/submission/resized/
