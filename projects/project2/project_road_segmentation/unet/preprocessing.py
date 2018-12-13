@@ -162,6 +162,68 @@ def convert_01(image, label):
     label[label <= .5], label[label > .5] = 0, 1
     return image, label
 
+def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_args, 
+    target_size=(400,400), color_mode="rgb", interpolation="lanzcos", image_save_prefix="image", 
+    mask_save_prefix="mask", save_to_dir=None, shuffle=True, seed=1):
+    
+    image_datagen, mask_datagen = ImageDataGenerator(**data_gen_args), ImageDataGenerator(**data_gen_args)
+
+    train_image_generator = image_datagen.flow_from_directory(
+        train_path + image_folder,
+        batch_size=batch_size,
+        class_mode=None,
+        target_size=target_size,
+        color_mode=color_mode,
+        interpolation=interpolation,
+        save_to_dir=save_to_dir+"train",
+        save_prefix=image_save_prefix,
+        shuffle=shuffle,
+        seed=seed,
+        subset="training")
+    train_mask_generator = mask_datagen.flow_from_directory(
+        train_path + mask_folder,
+        batch_size=batch_size,
+        class_mode=None,
+        target_size=target_size,
+        color_mode="grayscale",
+        interpolation=interpolation,
+        save_to_dir=save_to_dir+"train",
+        save_prefix=mask_save_prefix,
+        shuffle=shuffle,
+        seed=seed,
+        subset="training")
+    validation_image_generator = image_datagen.flow_from_directory(
+        train_path + image_folder,
+        batch_size=batch_size,
+        class_mode=None,
+        target_size=target_size,
+        color_mode=color_mode,
+        interpolation=interpolation,
+        save_to_dir=save_to_dir+"val",
+        save_prefix="val_"+image_save_prefix,
+        shuffle=shuffle,
+        seed=seed,
+        subset="validation")
+    validation_mask_generator = mask_datagen.flow_from_directory(
+        train_path + mask_folder,
+        batch_size=batch_size,
+        class_mode=None,
+        target_size=target_size,
+        color_mode="grayscale",
+        interpolation=interpolation,
+        save_to_dir=save_to_dir+"val",
+        save_prefix="val_"+mask_save_prefix,
+        shuffle=shuffle,
+        seed=seed,
+        subset="validation")
+
+    # Makes the generator function of tuples using the two flows
+    def generator(images, labels):
+        for (image, label) in zip(images, labels):
+            yield convert_01(image, label)
+
+    return generator(train_image_generator, train_mask_generator), generator(validation_image_generator, validation_mask_generator)
+
 def listdirpaths(dirpath):
     """
     Args:

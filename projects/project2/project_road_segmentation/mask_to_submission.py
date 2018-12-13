@@ -45,3 +45,14 @@ if __name__ == '__main__':
         print(image_filename)
         image_filenames.append(image_filename)
     masks_to_submission(submission_filename, *image_filenames)
+
+"""
+if __name__ == '__main__':
+    submission_filename = 'baseline_training.csv'
+    image_filenames = []
+    for i in range(1, 101):
+        image_filename = 'predictions_training/label/satImage_' + str(i) + '.png'
+        print(image_filename)
+        image_filenames.append(image_filename)
+    masks_to_submission(submission_filename, *image_filenames)
+"""

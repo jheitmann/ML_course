@@ -28,9 +28,9 @@ TRAINING_SIZE = 90
 VALIDATION_SIZE = 10  # Size of the validation set.
 TESTING_SIZE = 50
 SEED = 66478  # Set to None for random seed.
-BATCH_SIZE = 64 # 64
-NUM_EPOCHS = 15 # 10
-RESTORE_MODEL = False # If True, restore existing model instead of training a new one
+BATCH_SIZE = 16 # 64
+NUM_EPOCHS = 1 # 10
+RESTORE_MODEL = True # If True, restore existing model instead of training a new one
 RECORDING_STEP = 1000
 
 # Set image patch size in pixels
@@ -301,7 +301,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Get a concatenation of the prediction and groundtruth for given input file
     def get_prediction_with_groundtruth(filename, image_idx):
 
-        imageid = "test_%.3d" % image_idx
+        imageid = "_%.3d" % image_idx
         image_filename = filename + imageid + ".png"
         img = mpimg.imread(image_filename)
 
@@ -314,7 +314,7 @@ def main(argv=None):  # pylint: disable=unused-argument
     # Get prediction overlaid on the original image for given input file
     def get_prediction_with_overlay(filename, image_idx):
 
-        imageid = "test_%.3d" % image_idx
+        imageid = "_%.3d" % image_idx
         image_filename = filename + imageid + ".png"
         img = mpimg.imread(image_filename)
 
@@ -510,8 +510,23 @@ def main(argv=None):  # pylint: disable=unused-argument
                 save_path = saver.save(s, FLAGS.train_dir + "/model.ckpt")
                 print("Model saved in file: %s" % save_path)
 
+        print("Running predictions on training set")
+        prediction_training_dir = "predictions_training/"
+        if not os.path.isdir(prediction_training_dir):
+            os.mkdir(prediction_training_dir)
+            os.mkdir(prediction_training_dir + "label/")
+            os.mkdir(prediction_training_dir + "concat/")
+            os.mkdir(prediction_training_dir + "overlay/")
+        for i in range(1, 101):
+            train_data_filename = "unet/data/train/image/satImage"
+            img_prediction, pimg = get_prediction_with_groundtruth(train_data_filename, i)
+            Image.fromarray(img_prediction).save(prediction_training_dir + "label/" + "satImage_" + str(i) + ".png")
+            Image.fromarray(pimg).save(prediction_training_dir + "concat/" + "prediction_" + str(i) + ".png")
+            oimg = get_prediction_with_overlay(train_data_filename, i)
+            oimg.save(prediction_training_dir + "overlay/" + "overlay_" + str(i) + ".png")    
 
-        print ("Running prediction on testing set")
+       
+        print ("Running predictions on testing set")
         prediction_testing_dir = "predictions_testing/"
         if not os.path.isdir(prediction_testing_dir):
             os.mkdir(prediction_testing_dir)
@@ -519,12 +534,12 @@ def main(argv=None):  # pylint: disable=unused-argument
             os.mkdir(prediction_testing_dir + "concat/")
             os.mkdir(prediction_testing_dir + "overlay/")
         for i in range(1, TESTING_SIZE+1):
-            test_data_filename = "unet/data/test/image/"
+            test_data_filename = "unet/data/test/image/test"
             img_prediction, pimg = get_prediction_with_groundtruth(test_data_filename, i)
             Image.fromarray(img_prediction).save(prediction_testing_dir + "label/" + "test_" + str(i) + ".png")
             Image.fromarray(pimg).save(prediction_testing_dir + "concat/" + "prediction_" + str(i) + ".png")
             oimg = get_prediction_with_overlay(test_data_filename, i)
-            oimg.save(prediction_testing_dir + "overlay/" + "overlay_" + str(i) + ".png")       
+            oimg.save(prediction_testing_dir + "overlay/" + "overlay_" + str(i) + ".png")
 
 if __name__ == '__main__':
     tf.app.run()
