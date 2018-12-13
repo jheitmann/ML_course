@@ -1,3 +1,4 @@
+import os
 import cv2
 import matplotlib.image as mpimg
 import numpy as np
@@ -206,8 +207,71 @@ def mask_to_submission_strings(image_filename, start_from_0=False):
             yield ("{:03d}_{}_{},{}".format(img_number+(1 if start_from_0 else 0), j, i, label))
 
 def masks_to_submission(submission_filename, image_filenames, start_from_0=False):
-    """Converts images into a submission file"""
+    """
+    Converts images into a submission file.
+    image_filenames must contain strs *_NUM.*, with NUM a str convertible to int
+    ex: data/test/test_1.PNG or my/img/path/xyz_000000.jpeg are VALID filenames, but test2 is INVALID (no underscore, no .ext)
+    Args:
+        submission_filename: filename (path) of csv file created by this function
+        image_filenames: iterator of masks filenames (paths) to convert to csv
+        start_from_0: flag set True if filenames start at 0/000 and False if start at 1/001.
+    """
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in image_filenames:
             f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn, start_from_0=start_from_0))
+
+def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=False):
+    """
+    Computes the f1 score of a result.csv resulting from a test on training data based on known train masks
+    Args:
+        test_csv: path to result csv of a test.py run on the TRAINING dataset
+        train_masks_dir: path to masks images of training dataset
+        verbose: set True for debugging information prints
+    Returns:
+        f1 score
+    """
+    vprint = lambda *a, **kwa: print(*a, **kwa) if verbose else None
+    train_masks_filenames = [os.path.join(train_masks_dir, fn) for fn in os.listdir(train_masks_dir)]
+    TRAIN_MASKS_CSV = "results/trainset_masks.csv"
+    # Convert training masks to csv submission file at TRAIN_MASKS_CSV
+    masks_to_submission(TRAIN_MASKS_CSV, train_masks_filenames)
+    vprint(f"Saved training masks csv at {TRAIN_MASKS_CSV}")
+    # Load csv lines
+    with open(test_csv, "r") as f_test:
+        with open(TRAIN_MASKS_CSV) as f_train:
+            test_lines, train_lines = f_test.readlines()[1:], f_train.readlines()[1:]
+    # Remove \n and space char from lines
+    test_lines, train_lines = (
+        [l.replace('\n', '').replace(' ', '') for l in lines]
+        for lines in (test_lines, train_lines)
+    )
+    # Insure the csvs have one line for each patch in 100 images sized 400px*400px
+    assert len(test_lines) == len(train_lines) == 100 * 25 * 25,\
+        f"{len(test_lines)}, {len(train_lines)}, {100 * 25 * 25} not all equal."
+    vprint(f"Sizes of test csv and train csv are both correctly equal to {100 * 25 * 25}")
+    # Record true and false positives and negatives
+    accs = ([], [], [], [])
+    (tp, fp, tn, fn) = accs
+    for train_l, test_l in zip(train_lines, test_lines):
+        # Get prediction of train, test patch
+        (train_coord, train_pred), (test_coord, test_pred) = (l.split(',') for l in (train_l, test_l))
+        # Classify patch
+        (
+            tp if train_pred == test_pred == '1' else
+            tn if train_pred == test_pred == '0' else
+            fp if train_pred == '0' else
+            fn
+        ).append(test_coord)
+    ntp, nfp, ntn, nfn = (len(acc) for acc in accs)
+    vprint(f"n true pos={ntp}, n false pos={nfp}, n true neg={ntn}, n false neg={nfn}")
+    assert sum(len(a) for a in accs) == 100 * 25 * 25,\
+        f"Abnormal sum of true/false pos/neg ({sum(len(a) for a in accs)})"
+
+    #f1 = 2 * (precision * recall) / (precision + recall)
+    def F(beta):
+        """ F score for beta (F1 score = F(1)) """
+        b = 1 + beta*beta
+        return (b*ntp) / (b*ntp + b*(nfn+nfp))
+
+    return F(1)
