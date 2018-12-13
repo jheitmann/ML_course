@@ -268,10 +268,12 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     assert sum(len(a) for a in accs) == 100 * 25 * 25,\
         f"Abnormal sum of true/false pos/neg ({sum(len(a) for a in accs)})"
 
-    #f1 = 2 * (precision * recall) / (precision + recall)
-    def F(beta):
-        """ F score for beta (F1 score = F(1)) """
-        b = 1 + beta*beta
-        return (b*ntp) / (b*ntp + b*(nfn+nfp))
+    precision = ntp / (ntp + nfp)
+    vprint("precision", precision)
+    recall = ntp / (ntp + nfn)
+    vprint("recall", recall)
+    f1_score = 2/(1/precision + 1/recall)
+    return f1_score
 
-    return F(1)
+f1s=compute_trainset_f1("results/baseline_training.csv", verbose=True)
+print(f1s)
