@@ -7,7 +7,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from model import unet
 from preprocessing import extract_data, extract_labels, get_generators, split_data
 
-TRAINING_PATH = "data/train/"
+TRAINING_PATH = "data/train"
 IMG_SUBFOLDER = "image"
 GT_SUBFOLDER = "label"
 N_TRAIN_IMAGES = 100

@@ -233,7 +233,7 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     """
     vprint = lambda *a, **kwa: print(*a, **kwa) if verbose else None
     train_masks_filenames = [os.path.join(train_masks_dir, fn) for fn in os.listdir(train_masks_dir)]
-    TRAIN_MASKS_CSV = "results/trainset_masks.csv"
+    TRAIN_MASKS_CSV = "unet/results/trainset_masks.csv"
     # Convert training masks to csv submission file at TRAIN_MASKS_CSV
     masks_to_submission(TRAIN_MASKS_CSV, train_masks_filenames)
     vprint(f"Saved training masks csv at {TRAIN_MASKS_CSV}")
@@ -272,6 +272,6 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     def F(beta):
         """ F score for beta (F1 score = F(1)) """
         b = 1 + beta*beta
-        return (b*ntp) / (b*ntp + b*(nfn+nfp))
+        return (b*ntp) / (b*ntp + beta*beta*nfn +nfp)
 
     return F(1)

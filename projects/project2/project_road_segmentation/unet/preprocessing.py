@@ -163,14 +163,21 @@ def convert_01(image, label):
     return image, label
 
 def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_args, 
-    target_size=(400,400), color_mode="rgb", interpolation="lanzcos", image_save_prefix="image", 
+    target_size=(400,400), color_mode="rgb", interpolation="lanczos", image_save_prefix="image", 
     mask_save_prefix="mask", save_to_dir=None, shuffle=True, seed=1):
     
     image_datagen, mask_datagen = ImageDataGenerator(**data_gen_args), ImageDataGenerator(**data_gen_args)
 
+    # Makes flows
+    assert not image_folder.endswith(os.path.sep) and not image_folder.endswith('/'),\
+        f"The image path {image_folder} must NOT end with separator for some reason (ex: image/ -> image)"
+    assert not mask_folder.endswith(os.path.sep) and not mask_folder.endswith('/'),\
+        f"The label path {mask_folder} must NOT end with separator for some reason (ex: label/ -> label)"
+
     train_image_generator = image_datagen.flow_from_directory(
-        train_path + image_folder,
+        train_path,
         batch_size=batch_size,
+        classes=[image_folder],
         class_mode=None,
         target_size=target_size,
         color_mode=color_mode,
@@ -181,8 +188,9 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
         seed=seed,
         subset="training")
     train_mask_generator = mask_datagen.flow_from_directory(
-        train_path + mask_folder,
+        train_path,
         batch_size=batch_size,
+        classes=[mask_folder],
         class_mode=None,
         target_size=target_size,
         color_mode="grayscale",
@@ -193,8 +201,9 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
         seed=seed,
         subset="training")
     validation_image_generator = image_datagen.flow_from_directory(
-        train_path + image_folder,
+        train_path,
         batch_size=batch_size,
+        classes=[image_folder],
         class_mode=None,
         target_size=target_size,
         color_mode=color_mode,
@@ -205,8 +214,9 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
         seed=seed,
         subset="validation")
     validation_mask_generator = mask_datagen.flow_from_directory(
-        train_path + mask_folder,
+        train_path,
         batch_size=batch_size,
+        classes=[mask_folder],
         class_mode=None,
         target_size=target_size,
         color_mode="grayscale",
