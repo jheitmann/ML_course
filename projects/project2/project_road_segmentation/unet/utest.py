@@ -9,6 +9,7 @@ import os
 TESTING_PATH = "data/test/image/"
 TRAINING_PATH = "data/train/image/"
 PREDS_PATH = "results/label/"
+LOGITS_PATH = "results/logits/"
 RESULTS_PATH = "results/"
 N_TEST_IMAGES = 50
 N_TRAIN_IMAGES = 100
@@ -34,7 +35,7 @@ def main(img_height, rgb, aug, t):
     preds = model.predict(imgs, batch_size=1, verbose=1)
     print('preds shape', preds.shape)
     print('generating predicted masks in', PREDS_PATH)
-    pred_mask_files, logit_mask_files = predictions_to_masks(PREDS_PATH, preds, img_height)
+    pred_mask_files, logit_mask_files = predictions_to_masks(PREDS_PATH, preds, img_height, logits_path=LOGITS_PATH)
     print('generating submission at', SUBM_PATH)
     masks_to_submission(SUBM_PATH, pred_mask_files, start_from_0=True)
 
