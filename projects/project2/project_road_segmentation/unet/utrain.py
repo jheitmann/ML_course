@@ -37,7 +37,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)
         gt_imgs = extract_labels(TRAIN_GT_PATH, N_TRAIN_IMAGES, img_height)
 
-        hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, datetime.now())
+        hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_'))
         print("hdf5 name:", hdf5_name)
         ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
@@ -47,7 +47,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
     else:
         print("Using augmented dataset")
 
-        hdf5_name = "unet_{}_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height, datetime.now())
+        hdf5_name = "unet_{}_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_'))
         print("hdf5 name:", hdf5_name)
         ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
         data_gen_args = dict(rotation_range=90, fill_mode='reflect', horizontal_flip=True, vertical_flip=True) # shear_range = 0.01, zoom_range = 0.2
