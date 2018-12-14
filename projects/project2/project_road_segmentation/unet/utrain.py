@@ -8,9 +8,11 @@ from model import unet
 from preprocessing import extract_data, extract_labels, get_generators, split_data
 
 TRAINING_PATH = "data/train"
+CKPT_PATH = "results/"
 IMG_SUBFOLDER = "image"
 GT_SUBFOLDER = "label"
 N_TRAIN_IMAGES = 100
+AUG_SAVE_PATH = "data/train/aug/"
 
 TRAIN_IMG_PATH = os.path.join(TRAINING_PATH, IMG_SUBFOLDER)
 TRAIN_GT_PATH = os.path.join(TRAINING_PATH, GT_SUBFOLDER)
@@ -31,7 +33,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
 
         input_size = (img_height, img_height, n_channels)
         model = unet(input_size)
-        ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height)
+        ckpt_file = os.path.join(CKPT_PATH, "unet_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height))
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor='val_loss', verbose=1, save_best_only=True)
         model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
                     validation_split=validation_split, shuffle=True, callbacks=[model_checkpoint]) # shuffle=False
@@ -41,7 +43,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
 
         input_size = (img_height, img_height, n_channels)
         model = unet(input_size)
-        ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height)
+        ckpt_file = os.path.join(CKPT_PATH, "unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height))
 
         data_gen_args = dict(rotation_range=90, fill_mode='reflect', horizontal_flip=True, vertical_flip=True) # shear_range = 0.01, zoom_range = 0.2
 
@@ -54,9 +56,8 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
             assert "validation_split" in data_gen_args
 
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
-        save_to_dir = "data/train/aug/"
         color_mode = "rgb" if rgb else "grayscale"
-        train_generator, validation_generator = get_generators(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode, save_to_dir=save_to_dir)
+        train_generator, validation_generator = get_generators(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode, save_to_dir=AUG_SAVE_PATH)
         # Create validation parameters dict. passed to fit_generator(.) if using validation split in (0;1) else create an empty parameter dict
         validation_params = dict(validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch)) if "validation_split" in data_gen_args else {}
         model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], **validation_params)
