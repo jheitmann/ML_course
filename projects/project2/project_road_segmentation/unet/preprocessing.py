@@ -197,6 +197,7 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         f"The image path {image_folder} must NOT end with separator for some reason (ex: image/ -> image)"
     assert not label_folder.endswith(os.path.sep) and not label_folder.endswith('/'),\
         f"The label path {label_folder} must NOT end with separator for some reason (ex: label/ -> label)"
+    subset_train, subset_val = (dict(subset="training"), dict(subset="validation")) if "validation_split" in aug_dict else ({}, {})
     train_image_generator = image_datagen.flow_from_directory(
         train_path,
         classes=[image_folder],
@@ -207,7 +208,7 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         save_to_dir=save_to_dir,
         save_prefix=image_save_prefix,
         seed=seed,
-        subset="training")
+        **subset_train)
     train_label_generator = label_datagen.flow_from_directory(
         train_path,
         classes=[label_folder],
@@ -218,7 +219,7 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         save_to_dir=save_to_dir,
         save_prefix=mask_save_prefix,
         seed=seed,
-        subset="training")
+        **subset_train)
     validation_image_generator = image_datagen.flow_from_directory(
         train_path,
         classes=[image_folder],
@@ -229,7 +230,7 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         save_to_dir=save_to_dir,
         save_prefix=image_save_prefix,
         seed=seed,
-        subset="validation")
+        **subset_val)
     validation_label_generator = label_datagen.flow_from_directory(
         train_path,
         classes=[label_folder],
@@ -240,7 +241,7 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         save_to_dir=save_to_dir,
         save_prefix=mask_save_prefix,
         seed=seed,
-        subset="validation")
+        **subset_val)
     # Makes the generator function of tuples using the two flows
     def generator(images, labels):
         for (image, label) in zip(images, labels):
