@@ -18,22 +18,25 @@ AUG_SAVE_PATH = "data/train/aug/"
 TRAIN_IMG_PATH = os.path.join(TRAINING_PATH, IMG_SUBFOLDER)
 TRAIN_GT_PATH = os.path.join(TRAINING_PATH, GT_SUBFOLDER)
 
-def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor='loss'):
-    img_height = img_height
+def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor='loss', pretrained_weights=None):
+    if pretrained_weights:
+        assert str(img_height) in pretrained_weights, "Wrong img_height pretrained weights"
+        assert ("rgb" if rgb else "bw") in pretrained_weights, "Wrong color mode pretrained weights"
+        assert ("aug" in pretrained_weights) if aug else True, "aug bool not matching pretrained weights"
     n_channels = 3 if rgb else 1
     validation_split = (100 - steps_per_epoch) / 100.0
 
     print(f"Training on images of size {img_height}*{img_height} with {n_channels} input channel(s).")
 
+    input_size = (img_height, img_height, n_channels)
+    model = unet(input_size, pretrained_weights=pretrained_weights)
+
     if (not aug):
         print("Using raw data for training")
 
         imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)
-
         gt_imgs = extract_labels(TRAIN_GT_PATH, N_TRAIN_IMAGES, img_height)
 
-        input_size = (img_height, img_height, n_channels)
-        model = unet(input_size)
         hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, datetime.now())
         print("hdf5 name:", hdf5_name)
         ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
@@ -44,8 +47,6 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
     else:
         print("Using augmented dataset")
 
-        input_size = (img_height, img_height, n_channels)
-        model = unet(input_size)
         hdf5_name = "unet_{}_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height, datetime.now())
         print("hdf5 name:", hdf5_name)
         ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
@@ -80,6 +81,7 @@ if __name__=="__main__":
                         action="store_true")
     parser.add_argument("-aug", "--augmented", help="use augmented dataset",
                         action="store_true")
+    parser.add_argument("-pre", "--preweights", type=str, help="path to pretrained weights")
     args = parser.parse_args()
 
-    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.rgb_images, args.augmented, args.monitor)
+    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.rgb_images, args.augmented, args.monitor, args.preweights)
