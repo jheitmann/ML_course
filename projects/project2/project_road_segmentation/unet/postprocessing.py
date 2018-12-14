@@ -1,12 +1,14 @@
-import os
 import cv2
 import matplotlib.image as mpimg
 import numpy as np
+import os
+
 from PIL import Image
 
 PIXEL_DEPTH = 255
 IMG_PATCH_SIZE = 16
 TEST_IMG_HEIGHT = 608
+P_THRESHOLD = 0.4 # 0.5
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
@@ -78,7 +80,7 @@ def make_img_overlay(img, predicted_img):
     w = img.shape[0]
     h = img.shape[1]
     color_mask = np.zeros((w, h, 3), dtype=np.uint8)
-    color_mask[:,:,0] = predicted_img*PIXEL_DEPTH
+    color_mask[:,:,0] = predicted_img # *PIXEL_DEPTH
 
     img8 = img_float_to_uint8(img)
     background = Image.fromarray(img8, 'RGB').convert("RGBA")
@@ -86,48 +88,48 @@ def make_img_overlay(img, predicted_img):
     new_img = Image.blend(background, overlay, 0.2)
     return new_img
 
-# Get prediction for given input image 
-def get_prediction(img):
-    """
-    data = np.asarray(img_crop(img, IMG_PATCH_SIZE, IMG_PATCH_SIZE))
-    data_node = tf.constant(data)
-    output = tf.nn.softmax(model(data_node))
-    output_prediction = s.run(output)
-    img_prediction = label_to_img(img.shape[0], img.shape[1], IMG_PATCH_SIZE, IMG_PATCH_SIZE, output_prediction)
-
-    return img_prediction
-    """
-    return []
-
-def get_prediction_with_groundtruth(filename, image_idx):
+def get_prediction_with_groundtruth(file_name, img_prediction):
     """
     Get a concatenation of the prediction and groundtruth for given input file
     """
-
-    imageid = "satImage_%.3d" % image_idx
-    image_filename = filename + imageid + ".png"
-    img = mpimg.imread(image_filename)
-
-    img_prediction = get_prediction(img)
+    img = mpimg.imread(file_name)
     cimg = concatenate_images(img, img_prediction)
 
     return cimg
 
-def get_prediction_with_overlay(filename, image_idx):
+def get_prediction_with_overlay(img_filename, img_prediction):
     """
     Get prediction overlaid on the original image for given input file
     """
-
-    imageid = "satImage_%.3d" % image_idx
-    image_filename = filename + imageid + ".png"
-    img = mpimg.imread(image_filename)
-
-    img_prediction = get_prediction(img)
+    img = mpimg.imread(img_filename)
     oimg = make_img_overlay(img, img_prediction)
 
     return oimg
 
-def predictions_to_masks(path, preds, img_height, save_logits=True, logits_path='results/logits/'):
+def convert_prediction(file_name, predicted_mask, logits_mask, mask_path, logits_path, 
+    overlay_path, test_path, save_logits, save_overlay):
+
+    if save_logits:
+        logits_relative_path = logits_path + file_name + ".png"
+        logits_mask_scaled = cv2.resize(logits_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+        cv2.imwrite(logits_relative_path, logits_mask_scaled)   
+
+    mask_relative_path = mask_path + file_name + ".png"
+    print ('Predicting ' + mask_relative_path)    
+    predicted_mask_scaled = cv2.resize(predicted_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+    cv2.imwrite(mask_relative_path, predicted_mask_scaled)
+    
+    if save_overlay:
+        overlay_relative_path = overlay_path + file_name + ".png"
+        test_relative_path = test_path + file_name + ".png"
+        oimg = get_prediction_with_overlay(test_relative_path, predicted_mask_scaled)
+        oimg.save(overlay_relative_path)
+    
+    return mask_relative_path
+    
+
+def predictions_to_masks(result_path, test_path, preds, mask_folder="label/", logits_folder='logits/', 
+    overlay_folder='overlay/', save_logits=True, save_overlay=True):
     """
     Converts preds into an image mask, and serializes it to path
     Args:
@@ -137,43 +139,28 @@ def predictions_to_masks(path, preds, img_height, save_logits=True, logits_path=
         save_logits: if true, logit masks are saved (non-binary pixel intensities) to logits_path
         logits_path: where logits masks should be saved
     """
-
     num_pred = preds.shape[0]
+    mask_path = result_path + mask_folder
+    logits_path = result_path + logits_folder
+    overlay_path = result_path + overlay_folder
 
-    pred_masks = np.zeros(preds.shape)
-    pred_masks[preds >= 0.5] = 1.0
+    predicted_masks = np.zeros(preds.shape)
+    predicted_masks[preds >= P_THRESHOLD] = 1.0 
 
-    logit_masks = preds * PIXEL_DEPTH
-    pred_masks = pred_masks * PIXEL_DEPTH
+    logits_masks = preds * PIXEL_DEPTH
+    predicted_masks = predicted_masks * PIXEL_DEPTH
 
-    logit_masks = np.round(logit_masks).astype('uint8')
-    pred_masks = pred_masks.astype('uint8')
+    logits_masks = np.round(logits_masks).astype('uint8')
+    predicted_masks = predicted_masks.astype('uint8')
 
-    logit_masks = np.squeeze(logit_masks)
-    pred_masks = np.squeeze(pred_masks)
+    logits_masks = np.squeeze(logits_masks)
+    predicted_masks = np.squeeze(predicted_masks)
 
-    pred_mask_files = []
-    logit_mask_files = []
-    for i in range(num_pred):
+    filename_template = "test_%.3d"
+    predicted_mask_files = [convert_prediction((filename_template % i), predicted_masks[i-1], logits_masks[i-1], mask_path, logits_path,
+                                overlay_path, test_path, save_logits, save_overlay) for i in range(1, num_pred + 1)]
 
-        filename = "test_%.3d" % i
-
-        if save_logits:
-            logits_relative_path = logits_path + filename + ".png"
-            logit_mask = logit_masks[i]
-            logit_mask = cv2.resize(logit_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
-            cv2.imwrite(logits_relative_path, logit_mask)
-            logit_mask_files.append(logits_relative_path)
-        
-        mask_relative_path = path + filename + ".png"
-        print ('Predicting ' + mask_relative_path)
-
-        pred_mask = pred_masks[i]
-        pred_mask = cv2.resize(pred_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
-        cv2.imwrite(mask_relative_path, pred_mask)
-        pred_mask_files.append(mask_relative_path)
-
-    return pred_mask_files, logit_mask_files
+    return predicted_mask_files
 
 def patch_to_label(patch, foreground_threshold=0.25):
     """
@@ -182,13 +169,12 @@ def patch_to_label(patch, foreground_threshold=0.25):
     df = np.mean(patch)
     return int(df > foreground_threshold)
 
-def mask_to_submission_strings(image_filename, start_from_0=False):
+def mask_to_submission_strings(image_filename):
     """
     Reads a single image and outputs the strings that should go into the submission file
     Args:
         image_filename: filename of mask image 
         path_size: patch size (w, h). Always 16
-        start_from_0: set True if test_000.png instead of test_001.png
     Returns:
         yield all strings that should be serialized into the csv file corresp. to this image
     """
@@ -204,9 +190,9 @@ def mask_to_submission_strings(image_filename, start_from_0=False):
             # Convert to corresp. label
             label = patch_to_label(patch)
             # Yield resulting string
-            yield ("{:03d}_{}_{},{}".format(img_number+(1 if start_from_0 else 0), j, i, label))
+            yield ("{:03d}_{}_{},{}".format(img_number, j, i, label))
 
-def masks_to_submission(submission_filename, image_filenames, start_from_0=False):
+def masks_to_submission(submission_filename, image_filenames):
     """
     Converts images into a submission file.
     image_filenames must contain strs *_NUM.*, with NUM a str convertible to int
@@ -214,12 +200,11 @@ def masks_to_submission(submission_filename, image_filenames, start_from_0=False
     Args:
         submission_filename: filename (path) of csv file created by this function
         image_filenames: iterator of masks filenames (paths) to convert to csv
-        start_from_0: flag set True if filenames start at 0/000 and False if start at 1/001.
     """
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in image_filenames:
-            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn, start_from_0=start_from_0))
+            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))
 
 def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=False):
     """
