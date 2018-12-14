@@ -22,9 +22,9 @@ def main(img_height, rgb, aug, t):
         imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, rgb)
 
     if not aug:
-        ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if rgb else "bw", str(img_height))
+        ckpt_file = os.path.join(RESULT_PATH, "unet_{}_{}.hdf5".format("rgb" if rgb else "bw", str(img_height)))
     else:
-        ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", str(img_height))
+        ckpt_file = os.path.join(RESULT_PATH, "unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", str(img_height)))
 
     print('ckpt', ckpt_file)
     input_size = (img_height,img_height,n_channels)
