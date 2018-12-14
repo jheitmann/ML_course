@@ -75,7 +75,7 @@ if __name__=="__main__":
     parser.add_argument("epochs", type=int, help="number of training epochs")
     parser.add_argument("steps_per_epoch", type=float, choices=range(1, N_TRAIN_IMAGES+1),
                         help="number of training images per epoch")
-    parser.add_argument("-monitor", "--monitor", type=str, choices=["", "acc", "loss", "val_acc", "val_loss"],
+    parser.add_argument("-monitor", "--monitor", type=str, choices=["acc", "loss", "val_acc", "val_loss"],
                         default="", help="monitor metric for checkpoint")
     parser.add_argument("-rgb", "--rgb_images", help="train with 3 input channels",
                         action="store_true")
