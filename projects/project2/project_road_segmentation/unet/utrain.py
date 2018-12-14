@@ -2,6 +2,7 @@ import argparse
 import numpy as np
 import skimage.io as io
 import os
+from datetime import datetime
 
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from model import unet
@@ -33,8 +34,10 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
 
         input_size = (img_height, img_height, n_channels)
         model = unet(input_size)
-        ckpt_file = os.path.join(CKPT_PATH, "unet_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height))
-        model_checkpoint = ModelCheckpoint(ckpt_file, monitor='val_loss', verbose=1, save_best_only=True)
+        hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, datetime.now())
+        print("hdf5 name:", hdf5_name)
+        ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
+        model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
         model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
                     validation_split=validation_split, shuffle=True, callbacks=[model_checkpoint]) # shuffle=False
         
@@ -43,8 +46,9 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
 
         input_size = (img_height, img_height, n_channels)
         model = unet(input_size)
-        ckpt_file = os.path.join(CKPT_PATH, "unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height))
-
+        hdf5_name = "unet_{}_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height, datetime.now())
+        print("hdf5 name:", hdf5_name)
+        ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
         data_gen_args = dict(rotation_range=90, fill_mode='reflect', horizontal_flip=True, vertical_flip=True) # shear_range = 0.01, zoom_range = 0.2
 
         if 0 < validation_split < 1: #Only add validation_split if in (0;1) cf keras doc, to allow debugging with 100 steps (validation_split of 0 is not accepted)
@@ -78,4 +82,4 @@ if __name__=="__main__":
                         action="store_true")
     args = parser.parse_args()
 
-    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.rgb_images, args.augmented)
+    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.rgb_images, args.augmented, args.monitor)
