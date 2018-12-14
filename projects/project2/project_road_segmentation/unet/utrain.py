@@ -18,7 +18,7 @@ AUG_SAVE_PATH = "data/train/aug/"
 TRAIN_IMG_PATH = os.path.join(TRAINING_PATH, IMG_SUBFOLDER)
 TRAIN_GT_PATH = os.path.join(TRAINING_PATH, GT_SUBFOLDER)
 
-def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor='loss', pretrained_weights=None):
+def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor=None, pretrained_weights=None):
     if pretrained_weights:
         assert str(img_height) in pretrained_weights, "Wrong img_height pretrained weights"
         assert ("rgb" if rgb else "bw") in pretrained_weights, "Wrong color mode pretrained weights"
@@ -37,7 +37,8 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)
         gt_imgs = extract_labels(TRAIN_GT_PATH, N_TRAIN_IMAGES, img_height)
 
-        hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_'))
+        monitor = "acc" if not monitor else monitor
+        hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
         print("hdf5 name:", hdf5_name)
         ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
@@ -47,7 +48,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
     else:
         print("Using augmented dataset")
 
-        hdf5_name = "unet_{}_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_'))
+        hdf5_name = "unet_{}_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
         print("hdf5 name:", hdf5_name)
         ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
         data_gen_args = dict(rotation_range=90, fill_mode='reflect', horizontal_flip=True, vertical_flip=True) # shear_range = 0.01, zoom_range = 0.2
@@ -58,7 +59,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         monitor = "val_acc" if not monitor else monitor
         print("Monitoring with", monitor)
         if "val" in monitor:
-            assert "validation_split" in data_gen_args
+            assert "validation_split" in data_gen_args, "Monitoring a val metric with invalid validation_split"
 
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
         color_mode = "rgb" if rgb else "grayscale"
@@ -69,7 +70,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("img_height", type=int, choices=[256, 400],
+    parser.add_argument("img_height", type=int,
                         help="image height in pixels")
     parser.add_argument("batch_size", type=int, help="training batch size")
     parser.add_argument("epochs", type=int, help="number of training epochs")

@@ -13,22 +13,26 @@ N_TEST_IMAGES = 50
 N_TRAIN_IMAGES = 100
 SUBM_PATH = "results/output.csv"
 
-def main(img_height, rgb, aug, t):
+#def main(img_height, rgb, aug, t):
+def main(ckpt_path, t):
+    rgb = "rgb" in ckpt_path
     n_channels = 3 if rgb else 1
+    img_height = int(os.path.basename(ckpt_path).split("_")[2])
+    aug = "aug" in ckpt_path
 
     if t:
         imgs = extract_data(TRAINING_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)
     else:
         imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, rgb)
-
+    """
     if not aug:
         ckpt_file = os.path.join(RESULT_PATH, "unet_{}_{}.hdf5".format("rgb" if rgb else "bw", str(img_height)))
     else:
         ckpt_file = os.path.join(RESULT_PATH, "unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", str(img_height)))
-
-    print('ckpt', ckpt_file)
+    """
+    print('ckpt', ckpt_path)#ckpt_file    
     input_size = (img_height,img_height,n_channels)
-    model = unet(input_size, pretrained_weights=ckpt_file)
+    model = unet(input_size, pretrained_weights=ckpt_path)
     print('input_size', input_size)
     preds = model.predict(imgs, batch_size=1, verbose=1)
     print('preds shape', preds.shape)
@@ -37,9 +41,10 @@ def main(img_height, rgb, aug, t):
     print('generating submission at', SUBM_PATH)
     masks_to_submission(SUBM_PATH, predicted_mask_files)
 
-if __name__=="__main__":
+if __name__=="__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument("img_height", type=int, choices=[256, 400],
+    """
+    parser.add_argument("img_height", type=int,
                         help="image height in pixels")
     parser.add_argument("-rgb", "--rgb_images", help="train with 3 input channels",
                         action="store_true")
@@ -48,5 +53,12 @@ if __name__=="__main__":
     parser.add_argument("-t", "--training", help="predict training set instead of testing",
                         action="store_true")                    
     args = parser.parse_args()
-
-    main(args.img_height, args.rgb_images, args.augmented, args.training)
+    """
+    parser.add_argument("ckpt_path", type=str,
+                        help="path to ckpt file")
+    parser.add_argument("-t", "--training", help="predict training set instead of testing",
+                        action="store_true")        
+         
+    args = parser.parse_args()
+    # main(args.img_height, args.rgb_images, args.augmented, args.training)
+    main(args.ckpt_path, args.training)
