@@ -9,6 +9,7 @@ import os
 TESTING_PATH = "data/test/image/"
 TRAINING_PATH = "data/train/image/"
 PREDS_PATH = "results/label/"
+RESULTS_PATH = "results/"
 N_TEST_IMAGES = 50
 N_TRAIN_IMAGES = 100
 SUBM_PATH = "results/output.csv"
@@ -22,9 +23,9 @@ def main(img_height, rgb, aug, t):
         imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, rgb)
 
     if not aug:
-        ckpt_file = "results/unet_{}_{}.hdf5".format("rgb" if rgb else "bw", str(img_height))
+        ckpt_file = os.path.join(RESULTS_PATH, "unet_{}_{}.hdf5".format("rgb" if rgb else "bw", str(img_height)))
     else:
-        ckpt_file = "results/unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", str(img_height))
+        ckpt_file = os.path.join(RESULTS_PATH, "unet_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", str(img_height)))
 
     print('ckpt', ckpt_file)
     input_size = (img_height,img_height,n_channels)
