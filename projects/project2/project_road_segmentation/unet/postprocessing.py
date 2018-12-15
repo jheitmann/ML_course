@@ -8,7 +8,7 @@ from PIL import Image
 PIXEL_DEPTH = 255
 IMG_PATCH_SIZE = 16
 TEST_IMG_HEIGHT = 608
-P_THRESHOLD = 0.4 # 0.5
+P_THRESHOLD = 0.5 # 0.5
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""

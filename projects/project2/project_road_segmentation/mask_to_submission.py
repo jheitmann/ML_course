@@ -36,25 +36,17 @@ def masks_to_submission(submission_filename, *image_filenames):
         for fn in image_filenames[0:]:
             f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))
 
-if __name__ == '__main__':
-    submission_filename = 'louis_colab.csv'
-    image_filenames = []
-    for i in range(1, TESTING_SIZE + 1):
-        image_filename = 'results/label/test_' + str(i) + '.png'
-        print(image_filename)
-        image_filenames.append(image_filename)
-    masks_to_submission(submission_filename, *image_filenames)
 
-"""
+
 if __name__ == '__main__':
-    submission_filename = 'baseline_submission.csv'
+    submission_filename = 'final_baseline_submission.csv'
     image_filenames = []
     for i in range(1, TESTING_SIZE + 1):
         image_filename = 'predictions_testing/label/test_' + str(i) + '.png'
         print(image_filename)
         image_filenames.append(image_filename)
     masks_to_submission(submission_filename, *image_filenames)
-"""
+
 
 """
 if __name__ == '__main__':
