@@ -111,7 +111,7 @@ def convert_prediction(file_name, output_height, predicted_mask, logits_mask, ma
     overlay_path, test_name, save_logits, save_overlay):
 
     if save_logits:
-        logits_relative_path = logits_path + "test" + file_name + ".png"
+        logits_relative_path = logits_path + "logit" + file_name + ".png"
         logits_mask_scaled = cv2.resize(logits_mask, dsize=(output_height,output_height), interpolation=cv2.INTER_CUBIC)
         cv2.imwrite(logits_relative_path, logits_mask_scaled)   
 
