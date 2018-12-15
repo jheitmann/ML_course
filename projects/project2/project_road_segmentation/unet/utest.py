@@ -37,7 +37,8 @@ def main(ckpt_path, t, foreground_threshold=0.25):
     preds = model.predict(imgs, batch_size=1, verbose=1)
     print('preds shape', preds.shape)
     print('generating predicted masks in', RESULT_PATH)
-    predicted_mask_files = predictions_to_masks(RESULT_PATH, TESTING_PATH, preds)
+    test_name = TRAINING_PATH + "satImage" if t else TESTING_PATH + "test"
+    predicted_mask_files = predictions_to_masks(RESULT_PATH, test_name, preds)
     print('generating submission at', SUBM_PATH)
     masks_to_submission(SUBM_PATH, predicted_mask_files,foreground_threshold=foreground_threshold)
 

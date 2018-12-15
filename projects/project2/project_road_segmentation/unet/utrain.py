@@ -70,7 +70,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
 
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
         color_mode = "rgb" if rgb else "grayscale"
-        train_generator, validation_generator = get_generators(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode, save_to_dir=AUG_SAVE_PATH)
+        train_generator, validation_generator = get_generators(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode) # save_to_dir=AUG_SAVE_PATH
         # Create validation parameters dict. passed to fit_generator(.) if using validation split in (0;1) else create an empty parameter dict
         validation_params = dict(validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch)) if "validation_split" in data_gen_args else {}
         model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint, reduce_lr], **validation_params)

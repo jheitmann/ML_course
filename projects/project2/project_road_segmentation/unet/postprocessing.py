@@ -102,12 +102,13 @@ def get_prediction_with_overlay(img_filename, img_prediction):
     Get prediction overlaid on the original image for given input file
     """
     img = mpimg.imread(img_filename)
-    oimg = make_img_overlay(img, img_prediction)
+    prediction_scaled = cv2.resize(img_prediction, dsize=(img.shape[0],img.shape[1]), interpolation=cv2.INTER_CUBIC)
+    oimg = make_img_overlay(img, prediction_scaled)
 
     return oimg
 
 def convert_prediction(file_name, predicted_mask, logits_mask, mask_path, logits_path, 
-    overlay_path, test_path, save_logits, save_overlay):
+    overlay_path, test_name, save_logits, save_overlay):
 
     if save_logits:
         logits_relative_path = logits_path + file_name + ".png"
@@ -121,14 +122,14 @@ def convert_prediction(file_name, predicted_mask, logits_mask, mask_path, logits
     
     if save_overlay:
         overlay_relative_path = overlay_path + file_name + ".png"
-        test_relative_path = test_path + file_name + ".png"
-        oimg = get_prediction_with_overlay(test_relative_path, predicted_mask_scaled)
+        test_relative_path = test_name + file_name + ".png"
+        oimg = get_prediction_with_overlay(test_relative_path, predicted_mask)
         oimg.save(overlay_relative_path)
     
     return mask_relative_path
     
 
-def predictions_to_masks(result_path, test_path, preds, mask_folder="label/", logits_folder='logits/', 
+def predictions_to_masks(result_path, test_name, preds, mask_folder="label/", logits_folder='logits/', 
     overlay_folder='overlay/', save_logits=True, save_overlay=True):
     """
     Converts preds into an image mask, and serializes it to path
@@ -156,9 +157,9 @@ def predictions_to_masks(result_path, test_path, preds, mask_folder="label/", lo
     logits_masks = np.squeeze(logits_masks)
     predicted_masks = np.squeeze(predicted_masks)
 
-    filename_template = "test_%.3d"
+    filename_template = "_%.3d"
     predicted_mask_files = [convert_prediction((filename_template % i), predicted_masks[i-1], logits_masks[i-1], mask_path, logits_path,
-                                overlay_path, test_path, save_logits, save_overlay) for i in range(1, num_pred + 1)]
+                                overlay_path, test_name, save_logits, save_overlay) for i in range(1, num_pred + 1)]
 
     return predicted_mask_files
 
