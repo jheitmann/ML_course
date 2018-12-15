@@ -107,17 +107,17 @@ def get_prediction_with_overlay(img_filename, img_prediction):
 
     return oimg
 
-def convert_prediction(file_name, predicted_mask, logits_mask, mask_path, logits_path, 
+def convert_prediction(file_name, output_height, predicted_mask, logits_mask, mask_path, logits_path, 
     overlay_path, test_name, save_logits, save_overlay):
 
     if save_logits:
-        logits_relative_path = logits_path + file_name + ".png"
-        logits_mask_scaled = cv2.resize(logits_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+        logits_relative_path = logits_path + "logit" + file_name + ".png"
+        logits_mask_scaled = cv2.resize(logits_mask, dsize=(output_height,output_height), interpolation=cv2.INTER_CUBIC)
         cv2.imwrite(logits_relative_path, logits_mask_scaled)   
 
-    mask_relative_path = mask_path + file_name + ".png"
+    mask_relative_path = mask_path + "mask" + file_name + ".png"
     print ('Predicting ' + mask_relative_path)    
-    predicted_mask_scaled = cv2.resize(predicted_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+    predicted_mask_scaled = cv2.resize(predicted_mask, dsize=(output_height,output_height), interpolation=cv2.INTER_CUBIC)
     cv2.imwrite(mask_relative_path, predicted_mask_scaled)
     
     if save_overlay:
@@ -129,8 +129,8 @@ def convert_prediction(file_name, predicted_mask, logits_mask, mask_path, logits
     return mask_relative_path
     
 
-def predictions_to_masks(result_path, test_name, preds, mask_folder="label/", logits_folder='logits/', 
-    overlay_folder='overlay/', save_logits=True, save_overlay=True):
+def predictions_to_masks(result_path, test_name, preds, output_height, mask_folder="label/", 
+    logits_folder='logits/', overlay_folder='overlay/', save_logits=True, save_overlay=True):
     """
     Converts preds into an image mask, and serializes it to path
     Args:
@@ -158,8 +158,8 @@ def predictions_to_masks(result_path, test_name, preds, mask_folder="label/", lo
     predicted_masks = np.squeeze(predicted_masks)
 
     filename_template = "_%.3d"
-    predicted_mask_files = [convert_prediction((filename_template % i), predicted_masks[i-1], logits_masks[i-1], mask_path, logits_path,
-                                overlay_path, test_name, save_logits, save_overlay) for i in range(1, num_pred + 1)]
+    predicted_mask_files = [convert_prediction((filename_template % i), output_height, predicted_masks[i-1], logits_masks[i-1], mask_path, 
+                                logits_path, overlay_path, test_name, save_logits, save_overlay) for i in range(1, num_pred + 1)]
 
     return predicted_mask_files
 
@@ -219,7 +219,7 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     """
     vprint = lambda *a, **kwa: print(*a, **kwa) if verbose else None
     train_masks_filenames = [os.path.join(train_masks_dir, fn) for fn in os.listdir(train_masks_dir)]
-    TRAIN_MASKS_CSV = "unet/results/trainset_masks.csv"
+    TRAIN_MASKS_CSV = "results/trainset_masks.csv"
     # Convert training masks to csv submission file at TRAIN_MASKS_CSV
     masks_to_submission(TRAIN_MASKS_CSV, train_masks_filenames)
     vprint(f"Saved training masks csv at {TRAIN_MASKS_CSV}")
