@@ -219,6 +219,7 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     """
     vprint = lambda *a, **kwa: print(*a, **kwa) if verbose else None
     train_masks_filenames = [os.path.join(train_masks_dir, fn) for fn in os.listdir(train_masks_dir)]
+    train_masks_filenames.sort()
     TRAIN_MASKS_CSV = "results/trainset_masks.csv"
     # Convert training masks to csv submission file at TRAIN_MASKS_CSV
     masks_to_submission(TRAIN_MASKS_CSV, train_masks_filenames)
