@@ -169,7 +169,7 @@ def patch_to_label(patch, foreground_threshold=0.25):
     df = np.mean(patch)
     return int(df > foreground_threshold)
 
-def mask_to_submission_strings(image_filename):
+def mask_to_submission_strings(image_filename, foreground_threshold=0.25):
     """
     Reads a single image and outputs the strings that should go into the submission file
     Args:
@@ -188,11 +188,11 @@ def mask_to_submission_strings(image_filename):
             # Get patch np.array from image np.array
             patch = im[i:i + IMG_PATCH_SIZE, j:j + IMG_PATCH_SIZE]
             # Convert to corresp. label
-            label = patch_to_label(patch)
+            label = patch_to_label(patch, foreground_threshold)
             # Yield resulting string
             yield ("{:03d}_{}_{},{}".format(img_number, j, i, label))
 
-def masks_to_submission(submission_filename, image_filenames):
+def masks_to_submission(submission_filename, image_filenames, foreground_threshold=0.25):
     """
     Converts images into a submission file.
     image_filenames must contain strs *_NUM.*, with NUM a str convertible to int
@@ -204,7 +204,7 @@ def masks_to_submission(submission_filename, image_filenames):
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in image_filenames:
-            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn))
+            f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn, foreground_threshold))
 
 def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=False):
     """

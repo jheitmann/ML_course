@@ -14,10 +14,10 @@ N_TRAIN_IMAGES = 100
 SUBM_PATH = "results/output.csv"
 
 #def main(img_height, rgb, aug, t):
-def main(ckpt_path, t):
+def main(ckpt_path, t, foreground_threshold=0.25):
     rgb = "rgb" in ckpt_path
     n_channels = 3 if rgb else 1
-    img_height = int(os.path.basename(ckpt_path).split("_")[2])
+    img_height = int(os.path.basename(ckpt_path).split("_")[2].split('.')[0])
     aug = "aug" in ckpt_path
 
     if t:
@@ -39,7 +39,7 @@ def main(ckpt_path, t):
     print('generating predicted masks in', RESULT_PATH)
     predicted_mask_files = predictions_to_masks(RESULT_PATH, TESTING_PATH, preds)
     print('generating submission at', SUBM_PATH)
-    masks_to_submission(SUBM_PATH, predicted_mask_files)
+    masks_to_submission(SUBM_PATH, predicted_mask_files,foreground_threshold=foreground_threshold)
 
 if __name__=="__main__":    
     parser = argparse.ArgumentParser()

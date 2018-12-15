@@ -4,7 +4,7 @@ import skimage.io as io
 import os
 from datetime import datetime
 
-from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
+from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 from model import unet
 from preprocessing import extract_data, extract_labels, get_generators, split_data
 
@@ -18,7 +18,8 @@ AUG_SAVE_PATH = "data/train/aug/"
 TRAIN_IMG_PATH = os.path.join(TRAINING_PATH, IMG_SUBFOLDER)
 TRAIN_GT_PATH = os.path.join(TRAINING_PATH, GT_SUBFOLDER)
 
-def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor=None, pretrained_weights=None):
+def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor=None,
+        pretrained_weights=None, use_reducelr=True):
     if pretrained_weights:
         assert str(img_height) in pretrained_weights, "Wrong img_height pretrained weights"
         assert ("rgb" if rgb else "bw") in pretrained_weights, "Wrong color mode pretrained weights"
@@ -38,12 +39,15 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         gt_imgs = extract_labels(TRAIN_GT_PATH, N_TRAIN_IMAGES, img_height)
 
         monitor = "acc" if not monitor else monitor
+        if use_reducelr:
+            print(f"Using ReduceLROnPlateau on {monitor} w. factor {0.5},patience {5}, min_lr {0.001}")
+            reduce_lr = ReduceLROnPlateau(monitor=monitor, factor=0.5, patience=5, min_lr=0.001)
         hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
         print("hdf5 name:", hdf5_name)
         ckpt_file = os.path.join(CKPT_PATH, hdf5_name)
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
         model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
-                    validation_split=validation_split, shuffle=True, callbacks=[model_checkpoint]) # shuffle=False
+                    validation_split=validation_split, shuffle=True, callbacks=[model_checkpoint, reduce_lr]) # shuffle=False
         
     else:
         print("Using augmented dataset")
@@ -57,6 +61,9 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
             data_gen_args["validation_split"] = validation_split
 
         monitor = "val_acc" if not monitor else monitor
+        if use_reducelr:
+            print(f"Using ReduceLROnPlateau on {monitor} w. factor {0.5},patience {5}, min_lr {0.001}")
+            reduce_lr = ReduceLROnPlateau(monitor=monitor, factor=0.5, patience=5, min_lr=0.001)
         print("Monitoring with", monitor)
         if "val" in monitor:
             assert "validation_split" in data_gen_args, "Monitoring a val metric with invalid validation_split"
@@ -66,7 +73,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         train_generator, validation_generator = get_generators(batch_size, TRAINING_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode, save_to_dir=AUG_SAVE_PATH)
         # Create validation parameters dict. passed to fit_generator(.) if using validation split in (0;1) else create an empty parameter dict
         validation_params = dict(validation_data=validation_generator, validation_steps=(N_TRAIN_IMAGES - steps_per_epoch)) if "validation_split" in data_gen_args else {}
-        model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], **validation_params)
+        model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint, reduce_lr], **validation_params)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
