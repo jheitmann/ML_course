@@ -40,6 +40,7 @@ for area in AREAS:
     divmat[x0:x1,y0:y1] += onemat
 
 # Maps a reconstructed image index to its 4 crops in im_crops
+
 for fn in os.listdir(curr_dir):    
     if not "png" in fn: continue
 
@@ -61,5 +62,11 @@ for im_idx in range(N_RECONSTRUCTED):
         layers[i] = np.divide(layers[i], divmat).astype(np.uint8)
     layersum = layers.sum(axis=0, dtype=np.uint8)
     #result = np.divide(layersum, divmat)
+
+    P_THRESHOLD = 128
+    predicted_masks = np.zeros(layersum.shape, dtype=np.uint8)
+    predicted_masks[layersum >= P_THRESHOLD] = 255
+    save_L_nparr(RECON_LABEL, f"test_{im_idx+1}.png", predicted_masks)
+
     save_L_nparr(RECON_LOGITS, f"test_{im_idx+1}.png", layersum)
 
