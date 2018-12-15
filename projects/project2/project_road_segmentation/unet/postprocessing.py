@@ -182,6 +182,7 @@ def mask_to_submission_strings(image_filename, foreground_threshold=0.25):
     # Get image number. Works on any image_filename like */*_1.* or */*_001.* for example.
     img_name = image_filename.split('/')[-1]
     img_number = int(img_name.split('_')[1].split('.')[0])
+    
     # Read mask into np.array
     im = mpimg.imread(image_filename)
     for j in range(0, im.shape[1], IMG_PATCH_SIZE):
