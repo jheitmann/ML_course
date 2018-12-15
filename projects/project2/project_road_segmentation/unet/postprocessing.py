@@ -8,7 +8,7 @@ from PIL import Image
 PIXEL_DEPTH = 255
 IMG_PATCH_SIZE = 16
 TEST_IMG_HEIGHT = 608
-P_THRESHOLD = 0.4 # 0.5
+P_THRESHOLD = 0.5 # 0.5
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
@@ -102,34 +102,35 @@ def get_prediction_with_overlay(img_filename, img_prediction):
     Get prediction overlaid on the original image for given input file
     """
     img = mpimg.imread(img_filename)
-    oimg = make_img_overlay(img, img_prediction)
+    prediction_scaled = cv2.resize(img_prediction, dsize=(img.shape[0],img.shape[1]), interpolation=cv2.INTER_CUBIC)
+    oimg = make_img_overlay(img, prediction_scaled)
 
     return oimg
 
-def convert_prediction(file_name, predicted_mask, logits_mask, mask_path, logits_path, 
-    overlay_path, test_path, save_logits, save_overlay):
+def convert_prediction(file_name, output_height, predicted_mask, logits_mask, mask_path, logits_path, 
+    overlay_path, test_name, save_logits, save_overlay):
 
     if save_logits:
-        logits_relative_path = logits_path + file_name + ".png"
-        logits_mask_scaled = cv2.resize(logits_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+        logits_relative_path = logits_path + "test" + file_name + ".png"
+        logits_mask_scaled = cv2.resize(logits_mask, dsize=(output_height,output_height), interpolation=cv2.INTER_CUBIC)
         cv2.imwrite(logits_relative_path, logits_mask_scaled)   
 
-    mask_relative_path = mask_path + file_name + ".png"
+    mask_relative_path = mask_path + "mask" + file_name + ".png"
     print ('Predicting ' + mask_relative_path)    
-    predicted_mask_scaled = cv2.resize(predicted_mask, dsize=(TEST_IMG_HEIGHT,TEST_IMG_HEIGHT), interpolation=cv2.INTER_CUBIC)
+    predicted_mask_scaled = cv2.resize(predicted_mask, dsize=(output_height,output_height), interpolation=cv2.INTER_CUBIC)
     cv2.imwrite(mask_relative_path, predicted_mask_scaled)
     
     if save_overlay:
-        overlay_relative_path = overlay_path + file_name + ".png"
-        test_relative_path = test_path + file_name + ".png"
-        oimg = get_prediction_with_overlay(test_relative_path, predicted_mask_scaled)
+        overlay_relative_path = overlay_path + "overlay" + file_name + ".png"
+        test_relative_path = test_name + file_name + ".png"
+        oimg = get_prediction_with_overlay(test_relative_path, predicted_mask)
         oimg.save(overlay_relative_path)
     
     return mask_relative_path
     
 
-def predictions_to_masks(result_path, test_path, preds, mask_folder="label/", logits_folder='logits/', 
-    overlay_folder='overlay/', save_logits=True, save_overlay=True):
+def predictions_to_masks(result_path, test_name, preds, output_height, mask_folder="label/", 
+    logits_folder='logits/', overlay_folder='overlay/', save_logits=True, save_overlay=True):
     """
     Converts preds into an image mask, and serializes it to path
     Args:
@@ -156,9 +157,9 @@ def predictions_to_masks(result_path, test_path, preds, mask_folder="label/", lo
     logits_masks = np.squeeze(logits_masks)
     predicted_masks = np.squeeze(predicted_masks)
 
-    filename_template = "test_%.3d"
-    predicted_mask_files = [convert_prediction((filename_template % i), predicted_masks[i-1], logits_masks[i-1], mask_path, logits_path,
-                                overlay_path, test_path, save_logits, save_overlay) for i in range(1, num_pred + 1)]
+    filename_template = "_%.3d"
+    predicted_mask_files = [convert_prediction((filename_template % i), output_height, predicted_masks[i-1], logits_masks[i-1], mask_path, 
+                                logits_path, overlay_path, test_name, save_logits, save_overlay) for i in range(1, num_pred + 1)]
 
     return predicted_mask_files
 
@@ -218,7 +219,7 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     """
     vprint = lambda *a, **kwa: print(*a, **kwa) if verbose else None
     train_masks_filenames = [os.path.join(train_masks_dir, fn) for fn in os.listdir(train_masks_dir)]
-    TRAIN_MASKS_CSV = "unet/results/trainset_masks.csv"
+    TRAIN_MASKS_CSV = "results/trainset_masks.csv"
     # Convert training masks to csv submission file at TRAIN_MASKS_CSV
     masks_to_submission(TRAIN_MASKS_CSV, train_masks_filenames)
     vprint(f"Saved training masks csv at {TRAIN_MASKS_CSV}")

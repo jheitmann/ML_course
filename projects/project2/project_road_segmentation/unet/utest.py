@@ -11,6 +11,8 @@ TRAINING_PATH = "data/train/image/"
 RESULT_PATH = "results/"
 N_TEST_IMAGES = 50
 N_TRAIN_IMAGES = 100
+TEST_IMG_HEIGHT = 608
+TRAIN_IMG_HEIGHT = 400
 SUBM_PATH = "results/output.csv"
 
 #def main(img_height, rgb, aug, t):
@@ -37,7 +39,9 @@ def main(ckpt_path, t, foreground_threshold=0.25):
     preds = model.predict(imgs, batch_size=1, verbose=1)
     print('preds shape', preds.shape)
     print('generating predicted masks in', RESULT_PATH)
-    predicted_mask_files = predictions_to_masks(RESULT_PATH, TESTING_PATH, preds)
+    output_height = TRAIN_IMG_HEIGHT if t else TEST_IMG_HEIGHT
+    test_name = TRAINING_PATH + "satImage" if t else TESTING_PATH + "test"
+    predicted_mask_files = predictions_to_masks(RESULT_PATH, test_name, preds, output_height)
     print('generating submission at', SUBM_PATH)
     masks_to_submission(SUBM_PATH, predicted_mask_files,foreground_threshold=foreground_threshold)
 
