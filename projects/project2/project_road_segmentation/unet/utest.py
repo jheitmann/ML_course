@@ -3,11 +3,12 @@ import numpy as np
 
 from model import unet
 from preprocessing import extract_data
-from postprocessing import predictions_to_masks, masks_to_submission
+from postprocessing import predictions_to_masks, masks_to_submission, gen_four_split
 import os
 
 TESTING_PATH = "data/test/image/"
 TRAINING_PATH = "data/train/image/"
+TESTING_PATH_FOURSPLIT = "data/test/foursplit/"
 RESULT_PATH = "results/"
 N_TEST_IMAGES = 50
 N_TRAIN_IMAGES = 100
@@ -15,17 +16,28 @@ TEST_IMG_HEIGHT = 608
 TRAIN_IMG_HEIGHT = 400
 SUBM_PATH = "results/output.csv"
 
+REGENERATE_FOUR_SPLIT = False
+
 #def main(img_height, rgb, aug, t):
-def main(ckpt_path, t, foreground_threshold=0.25):
+def main(ckpt_path, t, use_four_split=True, foreground_threshold=0.25):
+    if use_four_split:
+        RESULT_PATH = "results/foursplit/"
+
     rgb = "rgb" in ckpt_path
     n_channels = 3 if rgb else 1
     img_height = int(os.path.basename(ckpt_path).split("_")[2].split('.')[0])
     aug = "aug" in ckpt_path
 
-    if t:
-        imgs = extract_data(TRAINING_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)
+    if use_four_split:
+        assert not t, "Four split on training dataset is a bad idea (images already at correct scale)"
+        if REGENERATE_FOUR_SPLIT:
+            gen_four_split(TESTING_PATH, TESTING_PATH_FOURSPLIT)
+        imgs = extract_data(TESTING_PATH_FOURSPLIT, "test_", N_TEST_IMAGES * 4, 256, rgb)
     else:
-        imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, rgb)
+        if t:
+            imgs = extract_data(TRAINING_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)
+        else:
+            imgs = extract_data(TESTING_PATH, "test_", N_TEST_IMAGES, img_height, rgb)
     """
     if not aug:
         ckpt_file = os.path.join(RESULT_PATH, "unet_{}_{}.hdf5".format("rgb" if rgb else "bw", str(img_height)))
@@ -39,11 +51,12 @@ def main(ckpt_path, t, foreground_threshold=0.25):
     preds = model.predict(imgs, batch_size=1, verbose=1)
     print('preds shape', preds.shape)
     print('generating predicted masks in', RESULT_PATH)
-    output_height = TRAIN_IMG_HEIGHT if t else TEST_IMG_HEIGHT
-    test_name = TRAINING_PATH + "satImage" if t else TESTING_PATH + "test"
+    output_height = TRAIN_IMG_HEIGHT if t or use_four_split else TEST_IMG_HEIGHT
+    test_name = TRAINING_PATH + "satImage" if t else TESTING_PATH + "test" if not use_four_split else os.path.join(TESTING_PATH_FOURSPLIT, "test")
     predicted_mask_files = predictions_to_masks(RESULT_PATH, test_name, preds, output_height)
     print('generating submission at', SUBM_PATH)
-    masks_to_submission(SUBM_PATH, predicted_mask_files,foreground_threshold=foreground_threshold)
+    if not use_four_split:    
+        masks_to_submission(SUBM_PATH, predicted_mask_files,foreground_threshold=foreground_threshold)
 
 if __name__=="__main__":    
     parser = argparse.ArgumentParser()
