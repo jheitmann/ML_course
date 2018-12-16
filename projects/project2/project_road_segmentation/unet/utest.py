@@ -52,9 +52,10 @@ def main(ckpt_path, t, four_split, foreground_threshold=0.25): # change to p_thr
     print('Predictions shape:', preds.shape)
     
     print('Generating predicted masks in', RESULT_PATH)
-    output_height = TRAIN_IMG_HEIGHT if t or four_split else TEST_IMG_HEIGHT
+    result_path = RESULT_PATH + ("train/" if t else "test/")
     test_name = TRAINING_PATH + "satImage" if t else TESTING_PATH + "test"
-    predicted_mask_files = predictions_to_masks(RESULT_PATH, test_name, preds, output_height, four_split, TEST_IMG_HEIGHT)
+    output_height = TRAIN_IMG_HEIGHT if t or four_split else TEST_IMG_HEIGHT
+    predicted_mask_files = predictions_to_masks(result_path, test_name, preds, output_height, four_split, TEST_IMG_HEIGHT)
     
     print('Generating submission at', SUBM_PATH)
     masks_to_submission(SUBM_PATH, predicted_mask_files, foreground_threshold=foreground_threshold)
