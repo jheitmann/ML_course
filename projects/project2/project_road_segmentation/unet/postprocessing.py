@@ -8,7 +8,9 @@ from PIL import Image
 PIXEL_DEPTH = 255
 IMG_PATCH_SIZE = 16
 TEST_IMG_HEIGHT = 608
-P_THRESHOLD = 0.5 # 0.5
+PIXEL_THRESHOLD = 127
+PREDS_PER_IMAGE = 4
+AREAS = ((0,0,400,400),(208,0,608,400),(0,208,400,608),(208,208,608,608))
 
 def error_rate(predictions, labels):
     """Return the error rate based on dense predictions and 1-hot labels."""
@@ -102,35 +104,83 @@ def get_prediction_with_overlay(img_filename, img_prediction):
     Get prediction overlaid on the original image for given input file
     """
     img = mpimg.imread(img_filename)
-    prediction_scaled = cv2.resize(img_prediction, dsize=(img.shape[0],img.shape[1]), interpolation=cv2.INTER_CUBIC)
-    oimg = make_img_overlay(img, prediction_scaled)
+    oimg = make_img_overlay(img, img_prediction)
 
     return oimg
 
-def convert_prediction(file_name, output_height, predicted_mask, logits_mask, mask_path, logits_path, 
-    overlay_path, test_name, save_logits, save_overlay):
-
-    if save_logits:
-        logits_relative_path = logits_path + "logit" + file_name + ".png"
-        logits_mask_scaled = cv2.resize(logits_mask, dsize=(output_height,output_height), interpolation=cv2.INTER_CUBIC)
-        cv2.imwrite(logits_relative_path, logits_mask_scaled)   
-
-    mask_relative_path = mask_path + "mask" + file_name + ".png"
-    print ('Predicting ' + mask_relative_path)    
-    predicted_mask_scaled = cv2.resize(predicted_mask, dsize=(output_height,output_height), interpolation=cv2.INTER_CUBIC)
-    cv2.imwrite(mask_relative_path, predicted_mask_scaled)
+def four_split_mean(masks, output_height):
+    num_preds = masks.shape[0]
+    n_imgs = int(num_preds / PREDS_PER_IMAGE)
+    preds_height = masks.shape[1]
+    print(f"Input shape: {masks.shape}")
+    grouped_preds = masks.reshape((n_imgs, PREDS_PER_IMAGE, preds_height, preds_height))
+    print(f"Grouped shape: {grouped_preds.shape}")
     
-    if save_overlay:
-        overlay_relative_path = overlay_path + "overlay" + file_name + ".png"
-        test_relative_path = test_name + file_name + ".png"
-        oimg = get_prediction_with_overlay(test_relative_path, predicted_mask)
-        oimg.save(overlay_relative_path)
+    averaged_preds = []
+    onemat = np.ones((preds_height,preds_height), dtype=np.uint8)
+    divmat = np.zeros((output_height,output_height), dtype=np.uint8)
+    for area in AREAS:
+        x0,y0,x1,y1 = area
+        divmat[x0:x1,y0:y1] += onemat
+
+    for i in range(n_imgs):
+        four_preds = grouped_preds[i]
+        output = np.zeros((output_height,output_height))
+        
+        for partial_pred_idx in range(PREDS_PER_IMAGE):
+            partial_pred = four_preds[partial_pred_idx]
+            x0,y0,x1,y1 = AREAS[partial_pred_idx]
+            output[x0:x1,y0:y1] += partial_pred
+
+        output = (output / divmat).astype("uint8")
+
+        averaged_preds.append(output)
+
+    return np.array(averaged_preds)
+
+def convert_predictions(logits_masks, output_height, four_split, averaged_preds_size,
+    mask_path, logits_path, overlay_path, test_name, save_logits, save_overlay):
+
+    num_preds = logits_masks.shape[0]
+    logits_masks_scaled = np.zeros((num_preds,output_height,output_height))
+    for i in range(logits_masks.shape[0]):
+        logits_masks_scaled[i] = cv2.resize(logits_masks[i], dsize=(output_height,output_height), 
+                                                interpolation=cv2.INTER_CUBIC)
+
+    if four_split:
+        logits_masks_scaled = four_split_mean(logits_masks_scaled, averaged_preds_size)
+
+    predicted_mask_files = []
+    predicted_masks_scaled = np.zeros(logits_masks_scaled.shape)
+    predicted_masks_scaled[logits_masks_scaled > PIXEL_THRESHOLD] = 255
     
-    return mask_relative_path
+    for i in range(1, logits_masks_scaled.shape[0]+1):
+        filename = "_%.3d" % i
+
+        logits_mask_scaled = logits_masks_scaled[i-1]
+        predicted_mask_scaled = predicted_masks_scaled[i-1]
+
+        if save_logits:
+            logits_relative_path = logits_path + "logit" + filename + ".png"
+            cv2.imwrite(logits_relative_path, logits_mask_scaled)   
+
+        mask_relative_path = mask_path + "mask" + filename + ".png"
+        print ('Predicting ' + mask_relative_path)
+        cv2.imwrite(mask_relative_path, predicted_mask_scaled)
+        predicted_mask_files.append(mask_relative_path)
+        
+        if save_overlay:
+            overlay_relative_path = overlay_path + "overlay" + filename + ".png"
+            test_relative_path = test_name + filename + ".png"
+            oimg = get_prediction_with_overlay(test_relative_path, predicted_mask_scaled)
+            oimg.save(overlay_relative_path)
+    
+    return predicted_mask_files
     
 
-def predictions_to_masks(result_path, test_name, preds, output_height, mask_folder="label/", 
-    logits_folder='logits/', overlay_folder='overlay/', save_logits=True, save_overlay=True):
+def predictions_to_masks(result_path, test_name, preds, output_height, four_split, 
+    averaged_preds_size, mask_folder="label/", logits_folder='logits/', 
+    overlay_folder='overlay/', save_logits=True, save_overlay=True):
     """
     Converts preds into an image mask, and serializes it to path
     Args:
@@ -140,28 +190,25 @@ def predictions_to_masks(result_path, test_name, preds, output_height, mask_fold
         save_logits: if true, logit masks are saved (non-binary pixel intensities) to logits_path
         logits_path: where logits masks should be saved
     """
-    num_pred = preds.shape[0]
     mask_path = result_path + mask_folder
     logits_path = result_path + logits_folder
     overlay_path = result_path + overlay_folder
 
-    predicted_masks = np.zeros(preds.shape)
-    predicted_masks[preds >= P_THRESHOLD] = 1.0 
+    #predicted_masks = np.zeros(preds.shape)
+    #predicted_masks[preds >= P_THRESHOLD] = 1.0 
 
     logits_masks = preds * PIXEL_DEPTH
-    predicted_masks = predicted_masks * PIXEL_DEPTH
+    #predicted_masks = predicted_masks * PIXEL_DEPTH
 
     logits_masks = np.round(logits_masks).astype('uint8')
-    predicted_masks = predicted_masks.astype('uint8')
+    #predicted_masks = predicted_masks.astype('uint8')
 
     logits_masks = np.squeeze(logits_masks)
-    predicted_masks = np.squeeze(predicted_masks)
+    #predicted_masks = np.squeeze(predicted_masks)
+ 
+    return convert_predictions(logits_masks, output_height, four_split, averaged_preds_size, mask_path,
+                                    logits_path, overlay_path, test_name, save_logits, save_overlay)
 
-    filename_template = "_%.3d"
-    predicted_mask_files = [convert_prediction((filename_template % i), output_height, predicted_masks[i-1], logits_masks[i-1], mask_path, 
-                                logits_path, overlay_path, test_name, save_logits, save_overlay) for i in range(1, num_pred + 1)]
-
-    return predicted_mask_files
 
 def patch_to_label(patch, foreground_threshold=0.25):
     """
