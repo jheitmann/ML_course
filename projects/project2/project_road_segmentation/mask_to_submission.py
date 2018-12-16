@@ -39,10 +39,10 @@ def masks_to_submission(submission_filename, *image_filenames):
 
 
 if __name__ == '__main__':
-    submission_filename = 'final_baseline_submission.csv'
+    submission_filename = 'four_crop_subm.csv'
     image_filenames = []
     for i in range(1, TESTING_SIZE + 1):
-        image_filename = 'predictions_testing/label/test_' + str(i) + '.png'
+        image_filename = 'unet/results/foursplit/reconstructed_label/test_' + str(i) + '.png'
         print(image_filename)
         image_filenames.append(image_filename)
     masks_to_submission(submission_filename, *image_filenames)
