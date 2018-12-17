@@ -90,8 +90,41 @@ def four_split_mean(masks, output_height):
     return np.array(averaged_preds)
 
 
-def convert_predictions(logits_masks, output_height, four_split, averaged_preds_size,
-    mask_path, logits_path, overlay_path, test_name, save_logits, save_overlay):
+def four_split_max(masks, output_height):
+    """
+    Transforms the 4*N split predictions to N aggregated predictions, taking the max for overlapping predictions
+    Args:
+        masks: np.array of shape [4*N, SPLIT_PRED_SIZE, SPLIT_PRED_SIZE]
+        output_height: size of output composite prediction masks
+    Returns:
+        np.array of shape [N, OUTPUT_HEIGHT, OUTPUT_HEIGHT] 
+    """
+    num_preds = masks.shape[0]
+    n_imgs = int(num_preds / PREDS_PER_IMAGE)
+    preds_height = masks.shape[1]
+    print(f"Input shape: {masks.shape}")
+    grouped_preds = masks.reshape((n_imgs, PREDS_PER_IMAGE, preds_height, preds_height))
+    print(f"Grouped shape: {grouped_preds.shape}")
+    
+    max_preds = []
+
+    for i in range(n_imgs):
+        four_preds = grouped_preds[i]
+        output = np.zeros((PREDS_PER_IMAGE,output_height,output_height))
+        
+        for partial_pred_idx in range(PREDS_PER_IMAGE):
+            partial_pred = four_preds[partial_pred_idx]
+            x0,y0,x1,y1 = AREAS[partial_pred_idx]
+            output[partial_pred_idx,x0:x1,y0:y1] += partial_pred
+
+        output = output.max(axis=0)
+
+        max_preds.append(output)
+
+    return np.array(max_preds)
+
+def convert_predictions(logits_masks, output_height, four_split, averaged_preds_size, mask_path, 
+    logits_path, overlay_path, test_name, save_logits, save_overlay, use_mean):
     """
     Converts preds into image masks and serializes them (and optionaly also logits & overlay)
     Args:
@@ -104,6 +137,7 @@ def convert_predictions(logits_masks, output_height, four_split, averaged_preds_
         test_name: a partial path pointing to image before "_number.png", like "data/test/test"
         save_logits: bool set True to save the logits images
         save_overlay: bool set True to save the overlays of the masks in red transparency over the imgs
+        use_mean: bool set True if mean is used instead of max to combine splits
     Returns:
         list of paths to the predicted masks files
     """
@@ -115,7 +149,8 @@ def convert_predictions(logits_masks, output_height, four_split, averaged_preds_
                                                 interpolation=cv2.INTER_CUBIC)
 
     if four_split:
-        logits_masks_scaled = four_split_mean(logits_masks_scaled, averaged_preds_size)
+        combine_splits = four_split_mean if use_mean else four_split_max
+        logits_masks_scaled = combine_splits(logits_masks_scaled, averaged_preds_size)
 
     predicted_mask_files = []
     predicted_masks_scaled = np.zeros(logits_masks_scaled.shape)
@@ -147,7 +182,7 @@ def convert_predictions(logits_masks, output_height, four_split, averaged_preds_
 
 def predictions_to_masks(result_path, test_name, preds, output_height, four_split, 
     averaged_preds_size, mask_folder="label/", logits_folder='logits/', 
-    overlay_folder='overlay/', save_logits=True, save_overlay=True):
+    overlay_folder='overlay/', save_logits=True, save_overlay=True, use_mean=True):
     """
     Converts predictions to logits and call convert_logits on logits to generate masks images,
     logits images, overlays images, and returns the ouput of convert_logits.
@@ -163,6 +198,7 @@ def predictions_to_masks(result_path, test_name, preds, output_height, four_spli
         overlay_folder: name of subfolder containing resulting overlays (if using save_overlay=True) 
         save_logits: bool set True to save the logits (non-binary pixel intensities) to logits_folder
         save_overlay: bool set True to save the overlays (mask in red transparency over the img) to overlay_folder
+        use_mean: bool set True if mean is used instead of max to combine splits
     Returns:
         list of paths to the predicted masks files
     """
@@ -183,7 +219,7 @@ def predictions_to_masks(result_path, test_name, preds, output_height, four_spli
     #predicted_masks = np.squeeze(predicted_masks)
  
     return convert_predictions(logits_masks, output_height, four_split, averaged_preds_size, mask_path,
-                                    logits_path, overlay_path, test_name, save_logits, save_overlay)
+                                    logits_path, overlay_path, test_name, save_logits, save_overlay, use_mean)
 
 
 def patch_to_label(patch, foreground_threshold=0.25):
