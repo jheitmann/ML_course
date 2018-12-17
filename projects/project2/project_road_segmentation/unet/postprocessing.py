@@ -2,40 +2,10 @@ import cv2
 import matplotlib.image as mpimg
 import numpy as np
 import os
-
 from PIL import Image
+
 from common import PIXEL_DEPTH, IMG_PATCH_SIZE, PIXEL_THRESHOLD, PREDS_PER_IMAGE, AREAS
 
-def error_rate(predictions, labels):
-    """Return the error rate based on dense predictions and 1-hot labels."""
-    return 100.0 - (
-        100.0 *
-        np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) /
-        predictions.shape[0])
-
-def write_predictions_to_file(predictions, labels, filename):
-    """
-    Write predictions from neural network to a file
-    Args:
-        predictions: np.array with predictions
-        labels: labels
-        filename: name of file to be written into
-    """
-    max_labels = np.argmax(labels, 1)
-    max_predictions = np.argmax(predictions, 1)
-    file = open(filename, "w")
-    n = predictions.shape[0]
-    for i in range(0, n):
-        file.write(max_labels(i) + ' ' + max_predictions(i))
-    file.close()
-
-def print_predictions(predictions, labels):
-    """
-    Print predictions and labels
-    """
-    max_labels = np.argmax(labels, 1)
-    max_predictions = np.argmax(predictions, 1)
-    print (str(max_labels) + ' ' + str(max_predictions))
 
 def img_float_to_uint8(img):
     """
@@ -49,21 +19,6 @@ def img_float_to_uint8(img):
     rimg = (rimg / np.max(rimg) * PIXEL_DEPTH).round().astype(np.uint8)
     return rimg
 
-def concatenate_images(img, gt_img):
-    nChannels = len(gt_img.shape)
-    w = gt_img.shape[0]
-    h = gt_img.shape[1]
-    if nChannels == 3:
-        cimg = np.concatenate((img, gt_img), axis=1)
-    else:
-        gt_img_3c = np.zeros((w, h, 3), dtype=np.uint8)
-        gt_img8 = img_float_to_uint8(gt_img)          
-        gt_img_3c[:,:,0] = gt_img8
-        gt_img_3c[:,:,1] = gt_img8
-        gt_img_3c[:,:,2] = gt_img8
-        img8 = img_float_to_uint8(img)
-        cimg = np.concatenate((img8, gt_img_3c), axis=1)
-    return cimg
 
 def make_img_overlay(img, predicted_img):
     """
@@ -85,14 +40,6 @@ def make_img_overlay(img, predicted_img):
     new_img = Image.blend(background, overlay, 0.2)
     return new_img
 
-def get_prediction_with_groundtruth(file_name, img_prediction):
-    """
-    Get a concatenation of the prediction and groundtruth for given input file
-    """
-    img = mpimg.imread(file_name)
-    cimg = concatenate_images(img, img_prediction)
-
-    return cimg
 
 def get_prediction_with_overlay(img_filename, img_prediction):
     """
@@ -102,6 +49,7 @@ def get_prediction_with_overlay(img_filename, img_prediction):
     oimg = make_img_overlay(img, img_prediction)
 
     return oimg
+
 
 def four_split_mean(masks, output_height):
     """
@@ -140,6 +88,7 @@ def four_split_mean(masks, output_height):
         averaged_preds.append(output)
 
     return np.array(averaged_preds)
+
 
 def convert_predictions(logits_masks, output_height, four_split, averaged_preds_size,
     mask_path, logits_path, overlay_path, test_name, save_logits, save_overlay):
@@ -244,6 +193,7 @@ def patch_to_label(patch, foreground_threshold=0.25):
     df = np.mean(patch)
     return int(df > foreground_threshold)
 
+
 def mask_to_submission_strings(image_filename, foreground_threshold=0.25):
     """
     Reads a single image and outputs the strings that should go into the submission file
@@ -268,6 +218,7 @@ def mask_to_submission_strings(image_filename, foreground_threshold=0.25):
             # Yield resulting string
             yield ("{:03d}_{}_{},{}".format(img_number, j, i, label))
 
+
 def masks_to_submission(submission_filename, image_filenames, foreground_threshold=0.25):
     """
     Converts images into a submission file.
@@ -281,6 +232,7 @@ def masks_to_submission(submission_filename, image_filenames, foreground_thresho
         f.write('id,prediction\n')
         for fn in image_filenames:
             f.writelines('{}\n'.format(s) for s in mask_to_submission_strings(fn, foreground_threshold))
+
 
 def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=False):
     """
@@ -336,6 +288,7 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     vprint("recall", recall)
     f1_score = 2/(1/precision + 1/recall)
     return f1_score
+
 
 def gen_four_split(original_images_dir, foursplit_dir):
     """

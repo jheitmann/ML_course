@@ -1,17 +1,17 @@
-
-import os
 import argparse
-
 import numpy as np
+import os
 
-from model import unet
-from preprocessing import extract_data
-from postprocessing import four_split_mean, predictions_to_masks, masks_to_submission, gen_four_split
 from common import TEST_IMG_PATH, TRAIN_IMG_PATH, TESTING_PATH_FOURSPLIT, RESULTS_PATH, SUBM_PATH,\
-                    N_TEST_IMAGES, N_TRAIN_IMAGES, TRAIN_IMG_HEIGHT
+                    N_TEST_IMAGES, N_TRAIN_IMAGES, TRAIN_IMG_HEIGHT, TEST_IMG_HEIGHT
+from model import unet
+from postprocessing import four_split_mean, predictions_to_masks, masks_to_submission, gen_four_split
+from preprocessing import extract_data
 from setup_env import check_env
 
+
 REGENERATE_FOUR_SPLIT = False
+
 
 def main(ckpt_path, t, four_split, foreground_threshold=0.25): # change to p_threshold
     assert check_env(os.getcwd()), "Failed env check."
@@ -24,8 +24,8 @@ def main(ckpt_path, t, four_split, foreground_threshold=0.25): # change to p_thr
     if four_split:
         assert not t, "Four split on training dataset is a bad idea (images already at correct scale)"
         if REGENERATE_FOUR_SPLIT:
-            gen_four_split(TEST_IMG_PATH, TEST_IMG_PATH_FOURSPLIT)
-        imgs = extract_data(TEST_IMG_PATH_FOURSPLIT, "test_", N_TEST_IMAGES * 4, img_height, rgb)
+            gen_four_split(TEST_IMG_PATH, TESTING_PATH_FOURSPLIT)
+        imgs = extract_data(TESTING_PATH_FOURSPLIT, "test_", N_TEST_IMAGES * 4, img_height, rgb)
     else:
         if t:
             imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)

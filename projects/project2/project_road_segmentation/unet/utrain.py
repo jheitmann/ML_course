@@ -1,17 +1,16 @@
-
-import os
 import argparse
-from datetime import datetime
-
 import numpy as np
 import skimage.io as io
+import os
+from datetime import datetime
 from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 
-from model import unet
-from preprocessing import extract_data, extract_labels, get_generators, split_data
 from common import TRAIN_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, N_TRAIN_IMAGES, AUG_SAVE_PATH, RESULTS_PATH,\
                     TRAIN_IMG_PATH, TRAIN_GT_PATH
+from model import unet
+from preprocessing import extract_data, extract_labels, get_generators, split_data
 from setup_env import check_env
+
 
 def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor=None,
         pretrained_weights=None, use_reducelr=True):
@@ -58,7 +57,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         ckpt_file = os.path.join(RESULTS_PATH, hdf5_name)
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
         model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
-                    validation_split=validation_split, shuffle=True, callbacks=[model_checkpoint, reduce_lr]) # shuffle=False
+                    validation_split=validation_split, shuffle=False, callbacks=[model_checkpoint, reduce_lr]) # shuffle=False
         
     else:
         print("Using augmented dataset")

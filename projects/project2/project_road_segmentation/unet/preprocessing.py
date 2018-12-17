@@ -1,32 +1,10 @@
-import os
-
 import cv2
 import numpy as np
+import os
 from keras.preprocessing.image import ImageDataGenerator
 
 from common import PIXEL_DEPTH
 
-def img_crop(im, w, h):
-    """
-    Args:
-        im: np.array of image
-        w: patch width stride
-        h: patch height stride
-    Returns:
-        list of (imwidth/w * imheight/h) np.arrays (the patches)
-    """
-    list_patches = []
-    imgwidth = im.shape[0]
-    imgheight = im.shape[1]
-    is_2d = len(im.shape) < 3
-    for i in range(0,imgheight,h):
-        for j in range(0,imgwidth,w):
-            if is_2d:
-                im_patch = im[j:j+w, i:i+h]
-            else:
-                im_patch = im[j:j+w, i:i+h, :]
-            list_patches.append(im_patch)
-    return list_patches
 
 def extract_data(image_path, image_prefix, num_images, img_height, as_rgb, *, verbose=True):
     """
@@ -60,27 +38,7 @@ def extract_data(image_path, image_prefix, num_images, img_height, as_rgb, *, ve
         img /= PIXEL_DEPTH
         imgs.append(img)            
 
-    # Are those lines useful?
-    num_images = len(imgs)
-    img_width = imgs[0].shape[0]
-    img_height = imgs[0].shape[1]
-
     return np.array(imgs)
-
-def value_to_class(v, foreground_threshold=0.25):
-    """
-    Assign a label to a patch v
-    Args:
-        v: patch np.array
-        foreground_threshold: percentage of pixels > 1 required to assign a foreground label to a patch
-    Returns:
-        one-hot vector of corresponding class
-    """
-    df = np.sum(v)
-    if df > foreground_threshold:
-        return [0, 1]
-    else:
-        return [1, 0]
 
 def extract_labels(label_path, num_images, img_height, *, verbose=True):
     """
@@ -114,43 +72,19 @@ def extract_labels(label_path, num_images, img_height, *, verbose=True):
 
     return np.array(gt_imgs)
 
-def label_to_img(imgwidth, imgheight, w, h, labels):
+def split_data(x, y, ratio, seed=1):
     """
-    Convert array of labels to an image
-    Args:
-        imgwidth: width of returned image
-        imgheight: height of returned image
-        w: horizontal step
-        h: vertical step
-        labels: logit np.array
-    Returns:
-        An imgwidth*imgheight np.array with patches of 1's when labels[patch]>0.5, 0's otherwise
-    """
-    array_labels = np.zeros([imgwidth, imgheight])
-    idx = 0
-    for i in range(0,imgheight,h):
-        for j in range(0,imgwidth,w):
-            if labels[idx] > 0.5:
-                l = 1
-            else:
-                l = 0
-            array_labels[j:j+w, i:i+h] = l
-            idx = idx + 1
-    return array_labels
-
-def split_data(x, y, ratio, myseed=1):
-    """
-    Splits the dataset based on the split ratio, uses myseed for the random selection of indices
+    Splits the dataset based on the split ratio, uses seed for the random selection of indices
     Args:
         x: data x
         y: labels y    
         ratio: train set will be 100*ratio % of the original, test 100*(1-ratio) %
-        myseed: rng seed
+        seed: rng seed
     Returns:
         4-tuple (x_train, x_test, y_train, y_test)
     """    
     # set seed
-    np.random.seed(myseed)
+    np.random.seed(seed)
     # generate random indices
     num_row = len(y)
     indices = np.random.permutation(num_row)
@@ -180,7 +114,7 @@ def convert_01(image, label):
 
 def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_args, 
     target_size=(400,400), color_mode="rgb", interpolation="lanczos", image_save_prefix="image", 
-    mask_save_prefix="mask", save_to_dir=None, shuffle=True, seed=1):
+    mask_save_prefix="mask", save_to_dir=None, shuffle=False, seed=1):
     """
     Args:
     batch_size
@@ -273,15 +207,16 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
 
     return generator(train_image_generator, train_mask_generator), generator(validation_image_generator, validation_mask_generator)
 
+"""
 def listdirpaths(dirpath):
-    """
+    \"""
     Args:
         dirpath: path to directory containing files
     Returns:
         a list of strings "{dirpath}/{filename}" for each file in dirpath/
-    """
+    \"""
     return [os.path.join(f) for f in os.listdir(dirpath)]
-"""
+
 def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict,
     image_color_mode="rgb",label_color_mode="grayscale",
     image_save_prefix="image",mask_save_prefix="mask",

@@ -9,16 +9,25 @@ ENV = {
     "data" : {
         "train" : {
             "image" : {},
-            "label" : {},
+            "label" : {}
         },
         "test" : {
             "image" : {},
-            "foursplit" : {},
-        },
+            "foursplit" : {}
+        }
     },
     "results" : {
-
-    },
+        "train" : {
+            "label" : {},
+            "logits" : {},
+            "overlay" : {}
+        },
+        "test" : {
+            "label" : {},
+            "logits" : {},
+            "overlay" : {}
+        }
+    }
 }
 
 def get_paths(envdic, acc_path=""):
