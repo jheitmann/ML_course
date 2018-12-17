@@ -160,14 +160,13 @@ def convert_predictions(logits_masks, output_height, four_split, averaged_preds_
     """
 
     num_preds = logits_masks.shape[0]
+    logits_masks_scaled = np.zeros((num_preds,output_height,output_height))
+    for i in range(logits_masks.shape[0]):
+        logits_masks_scaled[i] = cv2.resize(logits_masks[i], dsize=(output_height,output_height), 
+                                                interpolation=cv2.INTER_CUBIC)
 
     if four_split:
         logits_masks_scaled = four_split_mean(logits_masks_scaled, averaged_preds_size)
-    else:        
-        logits_masks_scaled = np.zeros((num_preds,output_height,output_height))
-        for i in range(logits_masks.shape[0]):
-            logits_masks_scaled[i] = cv2.resize(logits_masks[i], dsize=(output_height,output_height), 
-                                                    interpolation=cv2.INTER_CUBIC)
 
     predicted_mask_files = []
     predicted_masks_scaled = np.zeros(logits_masks_scaled.shape)
