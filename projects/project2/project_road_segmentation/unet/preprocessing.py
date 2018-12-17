@@ -6,7 +6,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from common import PIXEL_DEPTH
 
 
-def extract_data(image_path, image_prefix, num_images, img_height, as_rgb, *, verbose=True):
+def extract_data(image_path, num_images, img_height, as_rgb, verbose=True):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [0, 1].
@@ -23,14 +23,13 @@ def extract_data(image_path, image_prefix, num_images, img_height, as_rgb, *, ve
         4D tensor [image index, y, x, channels]
     """
     imgs = []
-    for i in range(1, num_images+1):
-        imageid = image_prefix + ("%.3d" % i)
-        image_filename =  os.path.join(image_path, f"{imageid}.png")
-        if not os.path.isfile(image_filename):
-            raise FileNotFoundError(f"File {image_filename} does not exist.") 
+    img_filenames = [os.path.join(image_path, fn) for fn in os.listdir(image_path)]
+    img_filenames.sort()
+
+    for filename in img_filenames[:num_images]: 
         if verbose:
-            print(f"Loading {image_filename}")
-        img = cv2.imread(image_filename, as_rgb)
+            print(f"Loading {filename}")
+        img = cv2.imread(filename, as_rgb)
         img = cv2.resize(img, dsize=(img_height, img_height), interpolation=cv2.INTER_AREA)
         if not as_rgb:
             img = img[..., np.newaxis]
@@ -40,7 +39,7 @@ def extract_data(image_path, image_prefix, num_images, img_height, as_rgb, *, ve
 
     return np.array(imgs)
 
-def extract_labels(label_path, num_images, img_height, *, verbose=True):
+def extract_labels(label_path, num_images, img_height, verbose=True):
     """
     Extract the labels into a 1-hot matrix [image index, label index].
     Args:
@@ -54,14 +53,13 @@ def extract_labels(label_path, num_images, img_height, *, verbose=True):
         1-hot matrix [image index, label index]
     """
     gt_imgs = []
-    for i in range(1, num_images+1):
-        imageid = "satImage_%.3d" % i
-        image_filename = os.path.join(label_path, f"{imageid}.png")
-        if not os.path.isfile(image_filename):
-            raise FileNotFoundError(f"File {image_filename} does not exist.")
+    gt_filenames = [os.path.join(label_path, fn) for fn in os.listdir(label_path)]
+    gt_filenames.sort()
+
+    for filename in gt_filenames[:num_images]:
         if verbose:
-            print (f"Loading {image_filename}")
-        labels = cv2.imread(image_filename, cv2.IMREAD_GRAYSCALE)
+            print (f"Loading {filename}")
+        labels = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
         labels = cv2.resize(labels, (img_height, img_height))
         labels = labels[..., np.newaxis]
         labels = labels.astype('float32')
