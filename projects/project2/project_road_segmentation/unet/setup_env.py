@@ -2,7 +2,7 @@
 import os
 from shutil import copyfile
 
-from common import GET_VERBOSE_PRINT, TRAIN_IMG_PATH, TRAIN_GT_PATH
+from common import GET_VERBOSE_PRINT, TRAIN_IMG_PATH, TRAIN_GT_PATH, SPLIT_TRAIN_INDICES, SPLIT_VALID_INDICES, SPLIT_TRAIN_IMG_PATH, SPLIT_TRAIN_GT_PATH, SPLIT_VAL_IMG_PATH, SPLIT_VAL_GT_PATH
 
 """
 Methods to setup the required environement for the project
@@ -18,7 +18,17 @@ ENV = {
         "test" : {
             "image" : {},
             "foursplit" : {},
-        }
+        },
+        "split" : {
+            "training" : {
+                "image" : {},
+                "label" : {},
+            },
+            "validation" : {
+                "image" : {},
+                "label" : {},
+            },
+        },
     },
     "results" : {
         "train" : {
@@ -30,8 +40,8 @@ ENV = {
             "label" : {},
             "logits" : {},
             "overlay" : {},
-        }
-    }
+        },
+    },
 }
 
 def get_paths(envdic, acc_path=""):
@@ -47,21 +57,20 @@ def get_paths(envdic, acc_path=""):
     return [acc_path] if not envdic else sum(
         (get_paths(subdic, os.path.join(acc_path, dirname)) for dirname, subdic in envdic.items()), [])
 
-def create_env(root_folder, *, verbose=False):
+def complete_env(root_folder, *, verbose=False):
     """
-    Creates ENV tree in root_folder. root_folder should be an EMPTY directory, or not exist at all.
+    Completes ENV tree in root_folder
     Args:
         root_folder: path to needed root folder of ENV tree, if inexistant, is created.
     Raises:
         EnvironementError: when an existing directory that should be created is found on disk
     """
     vprint = GET_VERBOSE_PRINT(verbose)
-    if not os.path.isdir(root_folder):
-        os.mkdir(root_folder)
     for d in get_paths(ENV, acc_path=root_folder):
         if os.path.isdir(d):
-            raise EnvironmentError(f"Found a pre-existing directory at {d}. Aborting.")
-        vprint(f"create_env is making folder {d}")
+            continue
+            #raise EnvironmentError(f"Found a pre-existing directory at {d}. Aborting.")
+        vprint(f"complete_env is making folder {d} because none pre-existing was found.")
         os.makedirs(d)
 
 def check_env(root_folder, *, verbose=False):
@@ -98,10 +107,8 @@ def prepare_train(root_folder, *, verbose=False):
     if not missing:
         return
 
-
     assert os.path.isdir(os.path.join(root_folder, "training/")), f"The training/ dataset folder was not found in {root_folder}."
-    create_env(root_folder, verbose=verbose)
-    TRANSFER = copyfile # choose one between copyfile or os.rename for resp. copying or moving (moving will "destroy" original dataset folders)
+    complete_env(root_folder, verbose=verbose)
 
     img_dir_path, gt_dir_path = (os.path.join(root_folder, "training", subf) for subf in ("images", "groundtruth"))
     vprint(f"Using images and groundtruth folders {img_dir_path}, {gt_dir_path}")
@@ -110,14 +117,20 @@ def prepare_train(root_folder, *, verbose=False):
         fpath = os.path.join(img_dir_path, fimg)
         new_path = os.path.join(TRAIN_IMG_PATH, fimg)
         vprint(f"Moving file {fpath} to {new_path}")
-        TRANSFER(fpath, new_path)
+        copyfile(fpath, new_path)
+        img_idx = int(fimg.split("_")[1].split(".")[0])
+        new_split_path = os.path.join(root_folder, SPLIT_TRAIN_IMG_PATH if img_idx in SPLIT_TRAIN_INDICES else SPLIT_VAL_IMG_PATH, fimg)
+        copyfile(fpath, new_split_path)
 
     for fgt in os.listdir(gt_dir_path):        
         fpath = os.path.join(gt_dir_path, fgt)
         new_path = os.path.join(TRAIN_GT_PATH, fgt)
         vprint(f"Moving file {fpath} to {new_path}")
-        TRANSFER(fpath, new_path)
-
+        copyfile(fpath, new_path)
+        img_idx = int(fgt.split("_")[1].split(".")[0])
+        new_split_path = os.path.join(root_folder, SPLIT_TRAIN_GT_PATH if img_idx in SPLIT_TRAIN_INDICES else SPLIT_VAL_GT_PATH, fgt)
+        copyfile(fpath, new_split_path)
+    
 def prepare_test(root_folder, *, verbose=False):
     """
     Prepares the structure necessary for running utrain.py from the original dataset
@@ -136,6 +149,4 @@ def prepare_test(root_folder, *, verbose=False):
         return
 
     assert os.path.isdir(os.path.join(root_folder, "test_set_images/")), f"The test_set_images/ dataset folder was not found in {root_folder}."
-    create_env(root_folder, verbose=verbose)
-
-    
+    complete_env(root_folder, verbose=verbose)
