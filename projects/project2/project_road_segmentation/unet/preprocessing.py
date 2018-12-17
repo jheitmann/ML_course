@@ -1,13 +1,20 @@
+import os
+
 import cv2
 import numpy as np
-import os
 from keras.preprocessing.image import ImageDataGenerator
 
-PIXEL_DEPTH = 255
-IMG_PATCH_SIZE = 16
+from common import PIXEL_DEPTH
 
-# Extract patches from a given image
 def img_crop(im, w, h):
+    """
+    Args:
+        im: np.array of image
+        w: patch width stride
+        h: patch height stride
+    Returns:
+        list of (imwidth/w * imheight/h) np.arrays (the patches)
+    """
     list_patches = []
     imgwidth = im.shape[0]
     imgheight = im.shape[1]
@@ -117,7 +124,7 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
         h: vertical step
         labels: logit np.array
     Returns:
-
+        An imgwidth*imgheight np.array with patches of 1's when labels[patch]>0.5, 0's otherwise
     """
     array_labels = np.zeros([imgwidth, imgheight])
     idx = 0
@@ -132,7 +139,16 @@ def label_to_img(imgwidth, imgheight, w, h, labels):
     return array_labels
 
 def split_data(x, y, ratio, myseed=1):
-    """ Splits the dataset based on the split ratio, uses myseed for the random selection of indices """    
+    """
+    Splits the dataset based on the split ratio, uses myseed for the random selection of indices
+    Args:
+        x: data x
+        y: labels y    
+        ratio: train set will be 100*ratio % of the original, test 100*(1-ratio) %
+        myseed: rng seed
+    Returns:
+        4-tuple (x_train, x_test, y_train, y_test)
+    """    
     # set seed
     np.random.seed(myseed)
     # generate random indices
@@ -165,6 +181,26 @@ def convert_01(image, label):
 def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_args, 
     target_size=(400,400), color_mode="rgb", interpolation="lanczos", image_save_prefix="image", 
     mask_save_prefix="mask", save_to_dir=None, shuffle=True, seed=1):
+    """
+    Args:
+    batch_size
+        train_path: path to directory containing subdirectories of images and masks
+        image_folder: name of subdirectory in train_path containing images
+        mask_folder: name of subdirectory in train_path containing masks
+        data_gen_args: args dict fed to the ImageDataGenerator objects
+        target_size: resizing size for both images and labels
+        color_mode: [grayscale|rbg|rgba] the generator will load resp. 1, 3 or 4 channels
+        interpolation: [nearest|bilinear|bicubic|lanczos|box|hamming] method for resampling to target_size
+        image_save_prefix: save_prefix of flow_from_directory for images
+        mask_save_prefix: save_prefix of flow_from_directory for images
+        save_to_dir: [None|str] path of directory in which will be saved the generated pictures. None disables saving
+        shuffle: bool set to True to shuffle the flow from the the folders
+        seed: rng seed used for shuffling and random transformations
+    Raises:
+        AssertionError: when any subfolder name ends with a separator char (not supported as classes)
+    Returns:
+        A generator function generating a formated tuple (image, label) of np.array
+    """
     
     image_datagen, mask_datagen = ImageDataGenerator(**data_gen_args), ImageDataGenerator(**data_gen_args)
 
@@ -174,6 +210,9 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
     assert not mask_folder.endswith(os.path.sep) and not mask_folder.endswith('/'),\
         f"The label path {mask_folder} must NOT end with separator for some reason (ex: label/ -> label)"
 
+    # If save_to_dir is provided, will pass save_to_dir+subf to generators, otherwise doesn't pass this param.
+    param_save_to = lambda subf: dict(save_to_dir=os.path.join(save_to_dir, subf)) if save_to_dir else {}
+
     train_image_generator = image_datagen.flow_from_directory(
         train_path,
         batch_size=batch_size,
@@ -182,7 +221,7 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
         target_size=target_size,
         color_mode=color_mode,
         interpolation=interpolation,
-        save_to_dir=save_to_dir+"train",
+        **param_save_to("train"),
         save_prefix=image_save_prefix,
         shuffle=shuffle,
         seed=seed,
@@ -195,7 +234,7 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
         target_size=target_size,
         color_mode="grayscale",
         interpolation=interpolation,
-        save_to_dir=save_to_dir+"train",
+        **param_save_to("train"),
         save_prefix=mask_save_prefix,
         shuffle=shuffle,
         seed=seed,
@@ -208,7 +247,7 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
         target_size=target_size,
         color_mode=color_mode,
         interpolation=interpolation,
-        save_to_dir=save_to_dir+"val",
+        **param_save_to("val"),
         save_prefix="val_"+image_save_prefix,
         shuffle=shuffle,
         seed=seed,
@@ -221,7 +260,7 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
         target_size=target_size,
         color_mode="grayscale",
         interpolation=interpolation,
-        save_to_dir=save_to_dir+"val",
+        **param_save_to("val"),
         save_prefix="val_"+mask_save_prefix,
         shuffle=shuffle,
         seed=seed,
@@ -242,12 +281,12 @@ def listdirpaths(dirpath):
         a list of strings "{dirpath}/{filename}" for each file in dirpath/
     """
     return [os.path.join(f) for f in os.listdir(dirpath)]
-
+"""
 def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict,
     image_color_mode="rgb",label_color_mode="grayscale",
     image_save_prefix="image",mask_save_prefix="mask",
     save_to_dir=None,target_size=(400,400),seed=1):
-    """
+    \"""
     Args:
         train_path: path to directory containing subdirectories of images and labels
         image_folder: name of subdirectory in train_path containing images
@@ -259,7 +298,7 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
         seed: rng seed
     Returns:
         A generator function generating a formated tuple (image, label) of np.array
-    """
+    \"""
     
     # Makes ImageDataGenerators according to aug_dict
     image_datagen, label_datagen = ImageDataGenerator(**aug_dict), ImageDataGenerator(**aug_dict)
@@ -320,3 +359,4 @@ def get_train_generator(batch_size,train_path,image_folder,label_folder,aug_dict
             yield convert_01(image, label)
 
     return generator(train_image_generator, train_label_generator), generator(validation_image_generator, validation_label_generator)
+"""
