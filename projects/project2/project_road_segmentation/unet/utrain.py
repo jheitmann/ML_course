@@ -40,19 +40,22 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
 
     input_size = (img_height, img_height, n_channels)
     model = unet(input_size, pretrained_weights=pretrained_weights)
-    validation_data = None
+    
+    if chosen_validation:
+        val_imgs = extract_data(common.SPLIT_VAL_IMG_PATH, common.N_SPLIT_VAL, img_height, rgb)
+        val_gt_imgs = extract_labels(common.SPLIT_VAL_GT_PATH, common.N_SPLIT_VAL, img_height)
+        validation_data = (val_imgs, val_gt_imgs)
+    else:
+        validation_data = None
 
     if (not aug):
         print("Using raw data for training")
 
         if chosen_validation:
-            imgs = extract_data(common.SPLIT_TRAIN_IMG_PATH, "satImage_", common.N_SPLIT_TRAIN, img_height, rgb)
+            imgs = extract_data(common.SPLIT_TRAIN_IMG_PATH, common.N_SPLIT_TRAIN, img_height, rgb)
             gt_imgs = extract_labels(common.SPLIT_TRAIN_GT_PATH, common.N_SPLIT_TRAIN, img_height)
-            val_imgs = extract_data(common.SPLIT_VAL_IMG_PATH, "satImage_", common.N_SPLIT_VAL, img_height, rgb)
-            val_gt_imgs = extract_labels(common.SPLIT_VAL_GT_PATH, common.N_SPLIT_VAL, img_height)
-            validation_data = zip(val_imgs, val_gt_imgs)
         else:
-            imgs = extract_data(common.TRAIN_IMG_PATH, "satImage_", common.N_TRAIN_IMAGES, img_height, rgb)
+            imgs = extract_data(common.TRAIN_IMG_PATH, common.N_TRAIN_IMAGES, img_height, rgb)
             gt_imgs = extract_labels(common.TRAIN_GT_PATH, common.N_TRAIN_IMAGES, img_height)
 
         monitor = "acc" if not monitor else monitor
@@ -74,7 +77,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         ckpt_file = os.path.join(common.RESULTS_PATH, hdf5_name)
         data_gen_args = dict(rotation_range=90, fill_mode='reflect', horizontal_flip=True, vertical_flip=True) # shear_range = 0.01, zoom_range = 0.2
 
-        if 0 < validation_split < 1: #Only add validation_split if in (0;1) cf keras doc, to allow debugging with 100 steps (validation_split of 0 is not accepted)
+        if 0 < validation_split < 1 and not chosen_validation: #Only add validation_split if in (0;1) cf keras doc, to allow debugging with 100 steps (validation_split of 0 is not accepted)
             data_gen_args["validation_split"] = validation_split
 
         monitor = "val_acc" if not monitor else monitor
@@ -82,17 +85,24 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
             print(f"Using ReduceLROnPlateau on {monitor} w. factor {0.5},patience {5}, min_lr {0.001}")
             reduce_lr = ReduceLROnPlateau(monitor=monitor, factor=0.5, patience=5, min_lr=0.001)
         print("Monitoring with", monitor)
+        """
         if "val" in monitor:
             assert "validation_split" in data_gen_args, "Monitoring a val metric with invalid validation_split"
+        """
 
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
         color_mode = "rgb" if rgb else "grayscale"
-        train_generator, validation_generator = get_generators(batch_size, common.TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
+
+        if chosen_validation:
+            train_generator, _ = get_generators(batch_size, common.SPLIT_TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
+                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode) # save_to_dir=AUG_SAVE_PATH
+        else: 
+            train_generator, validation_data = get_generators(batch_size, common.TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
                                                                 data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode) # save_to_dir=AUG_SAVE_PATH
         # Create validation parameters dict. passed to fit_generator(.) if using validation split in (0;1) else create an empty parameter dict
-        validation_params = dict(validation_data=validation_generator, validation_steps=(common.N_TRAIN_IMAGES - steps_per_epoch)) if "validation_split" in data_gen_args else {}
+        validation_params = dict(validation_data=validation_data, validation_steps=(common.N_TRAIN_IMAGES - steps_per_epoch)) if "validation_split" in data_gen_args or chosen_validation else {}
         model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint, reduce_lr], **validation_params)
-   
+    
     return ckpt_file
 
 if __name__=="__main__":
