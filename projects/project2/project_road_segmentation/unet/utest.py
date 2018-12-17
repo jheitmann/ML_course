@@ -45,7 +45,8 @@ def main(ckpt_path, t, four_split, foreground_threshold=0.25): # change to p_thr
     result_path = RESULTS_PATH + ("train/" if t else "test/")
     test_name = os.path.join(TRAIN_IMG_PATH, "satImage") if t else os.path.join(TEST_IMG_PATH, "test")
     output_height = TRAIN_IMG_HEIGHT if t or four_split else TEST_IMG_HEIGHT
-    predicted_mask_files = predictions_to_masks(result_path, test_name, preds, output_height, four_split, TEST_IMG_HEIGHT)
+    predicted_mask_files = predictions_to_masks(result_path, test_name, preds, output_height, 
+                                                    four_split, TEST_IMG_HEIGHT, use_mean=False) # True
     
     print('Generating submission at', SUBM_PATH)
     masks_to_submission(SUBM_PATH, predicted_mask_files, foreground_threshold=foreground_threshold)
