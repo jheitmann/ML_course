@@ -28,3 +28,6 @@ IMG_PATCH_SIZE = 16
 PIXEL_THRESHOLD = 127
 PREDS_PER_IMAGE = 4
 AREAS = ((0,0,400,400),(208,0,608,400),(0,208,400,608),(208,208,608,608))
+
+# returns print if verbose==True, otherwise an invisible function w. same signature
+GET_VERBOSE_PRINT = lambda verbose: (lambda *a, **kwa: print(*a, **kwa) if verbose else None)

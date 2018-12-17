@@ -7,14 +7,14 @@ from common import TEST_IMG_PATH, TRAIN_IMG_PATH, TESTING_PATH_FOURSPLIT, RESULT
 from model import unet
 from postprocessing import four_split_mean, predictions_to_masks, masks_to_submission, gen_four_split
 from preprocessing import extract_data
-from setup_env import check_env
+from setup_env import check_env, prepare_test, prepare_train
 
 
 REGENERATE_FOUR_SPLIT = False
 
 
 def main(ckpt_path, t, four_split, foreground_threshold=0.25): # change to p_threshold
-    assert check_env(os.getcwd()), "Failed env check."
+    prepare_test(os.getcwd(), verbose=True)
 
     rgb = "rgb" in ckpt_path
     n_channels = 3 if rgb else 1

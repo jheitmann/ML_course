@@ -9,7 +9,7 @@ from common import TRAIN_PATH, IMG_SUBFOLDER, GT_SUBFOLDER, N_TRAIN_IMAGES, AUG_
                     TRAIN_IMG_PATH, TRAIN_GT_PATH
 from model import unet
 from preprocessing import extract_data, extract_labels, get_generators, split_data
-from setup_env import check_env
+from setup_env import check_env, prepare_train
 
 
 def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor=None,
@@ -27,8 +27,8 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         use_reducelr: bool set True for using a ReduceLROnPlateau callback, rescaling the learning rate in case of stagnating training performance
     Raises:
         AssertionError: when encountering discrepancies in pretrained_weights/current_model rgb,aug,img_height parameters
-    """    
-    assert check_env(os.getcwd()), "Failed env check."
+    """
+    prepare_train(os.getcwd(), verbose=True)
 
     if pretrained_weights:
         assert str(img_height) in pretrained_weights, "Wrong img_height pretrained weights"
