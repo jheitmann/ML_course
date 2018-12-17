@@ -90,15 +90,18 @@ def prepare_train(root_folder, *, verbose=False):
     Raises:
         AssertionError: when the training/ original dataset is not found in root_folder
     """
-    assert os.path.isdir(os.path.join(root_folder, "training/")), f"The training/ dataset folder was not found in {root_folder}."
-    TRANSFER = copyfile # choose one between copyfile or os.rename for resp. copying or moving (moving will "destroy" original dataset folders)
-
+    
     vprint = GET_VERBOSE_PRINT(verbose)
 
     missing = check_env(root_folder)
     vprint(f"check_env on {root_folder} returned {missing}")
-    if missing:
-        create_env(root_folder, verbose=verbose)
+    if not missing:
+        return
+
+
+    assert os.path.isdir(os.path.join(root_folder, "training/")), f"The training/ dataset folder was not found in {root_folder}."
+    create_env(root_folder, verbose=verbose)
+    TRANSFER = copyfile # choose one between copyfile or os.rename for resp. copying or moving (moving will "destroy" original dataset folders)
 
     img_dir_path, gt_dir_path = (os.path.join(root_folder, "training", subf) for subf in ("images", "groundtruth"))
     vprint(f"Using images and groundtruth folders {img_dir_path}, {gt_dir_path}")
@@ -124,11 +127,15 @@ def prepare_test(root_folder, *, verbose=False):
     Raises:
         AssertionError: when the training/ original dataset is not found in root_folder
     """
-    assert os.path.isdir(os.path.join(root_folder, "test_set_images/")), f"The test_set_images/ dataset folder was not found in {root_folder}."
 
     vprint = GET_VERBOSE_PRINT(verbose)
 
     missing = check_env(root_folder)
     vprint(f"check_env on {root_folder} returned {missing}")
-    if missing:
-        create_env(root_folder, verbose=verbose)
+    if not missing:
+        return
+
+    assert os.path.isdir(os.path.join(root_folder, "test_set_images/")), f"The test_set_images/ dataset folder was not found in {root_folder}."
+    create_env(root_folder, verbose=verbose)
+
+    
