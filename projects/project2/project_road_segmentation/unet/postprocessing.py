@@ -345,8 +345,3 @@ def gen_four_split(original_images_dir, foursplit_dir):
             crop_save_path = os.path.join(foursplit_dir, f"{imageid}.png")
             print(i, original_index, fn, crop_save_path)
             crop.save(crop_save_path)
-
-train_masks_filenames = [os.path.join(train_masks_dir, fn) for fn in os.listdir(train_masks_dir)]
-train_masks_filenames.sort()
-img_name = image_filename.split('/')[-1]
-img_number = int(img_name.split('_')[1].split('.')[0])
