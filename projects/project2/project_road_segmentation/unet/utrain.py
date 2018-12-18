@@ -3,7 +3,6 @@ import numpy as np
 import skimage.io as io
 import os
 from datetime import datetime
-from keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard, ReduceLROnPlateau
 
 import common
 from model import unet
@@ -29,7 +28,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
     prepare_train(os.getcwd(), verbose=True)
 
     n_channels = 3 if rgb else 1
-    validation_split = (100 - steps_per_epoch) / 100.0
+    validation_split = (common.N_TRAIN_IMAGES - steps_per_epoch) / float(common.N_TRAIN_IMAGES)
     input_size = (img_height, img_height, n_channels)
     model = unet(input_size, pretrained_weights=pretrained_weights)
 
@@ -57,11 +56,10 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
         assert ("rgb" if rgb else "bw") in pretrained_weights, "Wrong color mode pretrained weights"
     
     print(f"Training on images of size {img_height}*{img_height} with {n_channels} input channel(s).")
+    print("Using {} dataset {} chosen validation for training".format("raw" if not aug else "augmented", "with" if chosen_validation else "without"))
     print("Monitoring with", monitor)
 
     if not aug:
-        print("Using raw data for training")
-
         if chosen_validation:
             imgs = extract_data(common.SPLIT_TRAIN_IMG_PATH, common.N_SPLIT_TRAIN, img_height, rgb)
             gt_imgs = extract_labels(common.SPLIT_TRAIN_GT_PATH, common.N_SPLIT_TRAIN, img_height)
@@ -74,8 +72,6 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
                     validation_data=validation_params['validation_data'], shuffle=False, callbacks=[model_checkpoint])
         
     else:
-        print("Using augmented dataset")
-        
         data_gen_args = dict(rotation_range=90, fill_mode='reflect', horizontal_flip=True, vertical_flip=True)
         color_mode = "rgb" if rgb else "grayscale"
 
