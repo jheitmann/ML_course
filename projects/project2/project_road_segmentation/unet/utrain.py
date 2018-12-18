@@ -6,7 +6,7 @@ from datetime import datetime
 
 import common
 from model import unet
-from preprocessing import extract_data, extract_labels, get_checkpoint, get_generators, split_data
+from preprocessing import extract_data, extract_labels, get_checkpoint, get_generators
 from setup_env import check_env, prepare_train
 
 
@@ -78,9 +78,9 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
         # save_to_dir=common.AUG_SAVE_PATH
         if chosen_validation:
             train_generator, _ = get_generators(batch_size, common.SPLIT_TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
-                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)
-            
-        else: 
+                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)   
+        else:
+            data_gen_args["validation_split"] = validation_split 
             train_generator, validation_generator = get_generators(batch_size, common.TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
                                                                 data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)
             validation_params["validation_data"] = validation_generator 
