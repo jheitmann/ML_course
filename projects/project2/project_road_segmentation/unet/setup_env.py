@@ -20,11 +20,11 @@ ENV = {
             "foursplit" : {},
         },
         "split" : {
-            "training" : {
+            "train" : {
                 "image" : {},
                 "label" : {},
             },
-            "validation" : {
+            "val" : {
                 "image" : {},
                 "label" : {},
             },

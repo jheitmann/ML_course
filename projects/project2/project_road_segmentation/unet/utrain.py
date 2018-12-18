@@ -48,8 +48,9 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
     else:
         validation_data = None
 
+    
+    print("Using {} dataset {} chosen validation for training".format("raw" if not aug else "augmented", "with" if chosen_validation else "without"))
     if (not aug):
-        print("Using raw data for training")
 
         if chosen_validation:
             imgs = extract_data(common.SPLIT_TRAIN_IMG_PATH, common.N_SPLIT_TRAIN, img_height, rgb)
@@ -68,10 +69,8 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
         model_checkpoint = ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
         model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1, validation_split=validation_split, 
                     validation_data=validation_data, shuffle=False, callbacks=[model_checkpoint, reduce_lr])
-        
-    else:
-        print("Using augmented dataset")
 
+    else:
         hdf5_name = "unet_{}_{}_{}_aug.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
         print("hdf5 name:", hdf5_name)
         ckpt_file = os.path.join(common.RESULTS_PATH, hdf5_name)
@@ -119,7 +118,9 @@ if __name__=="__main__":
                         action="store_true")
     parser.add_argument("-aug", "--augmented", help="use augmented dataset",
                         action="store_true")
+    parser.add_argument("-cvl", "--chosenval", help="use chosen validation datasets",
+                        action="store_true")
     parser.add_argument("-pre", "--preweights", type=str, help="path to pretrained weights")
     args = parser.parse_args()
 
-    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.rgb_images, args.augmented, args.monitor, args.preweights)
+    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.rgb_images, args.augmented, args.monitor, args.preweights, args.chosenval)

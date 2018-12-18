@@ -2,8 +2,8 @@
 import os
 
 #utrain
-SPLIT_TRAIN_PATH = "data/split/training"
-SPLIT_VAL_PATH = "data/split/validation"
+SPLIT_TRAIN_PATH = "data/split/train"
+SPLIT_VAL_PATH = "data/split/val"
 TRAIN_PATH = "data/train"
 TEST_PATH = "data/test"
 IMG_SUBFOLDER = "image"
