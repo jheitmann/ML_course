@@ -2,8 +2,8 @@
 import os
 
 #utrain
-SPLIT_TRAIN_PATH = "data/split/training"
-SPLIT_VAL_PATH = "data/split/validation"
+SPLIT_TRAIN_PATH = "data/split/train"
+SPLIT_VAL_PATH = "data/split/val"
 TRAIN_PATH = "data/train"
 TEST_PATH = "data/test"
 IMG_SUBFOLDER = "image"
@@ -21,7 +21,6 @@ SPLIT_TRAIN_IMG_PATH = os.path.join(SPLIT_TRAIN_PATH, IMG_SUBFOLDER)
 SPLIT_TRAIN_GT_PATH = os.path.join(SPLIT_TRAIN_PATH, GT_SUBFOLDER)
 SPLIT_VAL_IMG_PATH = os.path.join(SPLIT_VAL_PATH, IMG_SUBFOLDER)
 SPLIT_VAL_GT_PATH = os.path.join(SPLIT_VAL_PATH, GT_SUBFOLDER)
-
 
 SPLIT_VALID_INDICES = [26, 33, 65, 82, 83, 84, 85, 86, 87, 88, 89, 90, 92, 93, 94, 95, 97, 98, 99, 100]
 SPLIT_TRAIN_INDICES = [idx for idx in range(1, N_TRAIN_IMAGES) if not idx in SPLIT_VALID_INDICES]

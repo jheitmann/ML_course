@@ -5,9 +5,9 @@ import os
 from common import TEST_IMG_PATH, TRAIN_IMG_PATH, TESTING_PATH_FOURSPLIT, RESULTS_PATH, SUBM_PATH,\
                     N_TEST_IMAGES, N_TRAIN_IMAGES, TRAIN_IMG_HEIGHT, TEST_IMG_HEIGHT
 from model import unet
-from postprocessing import four_split_mean, predictions_to_masks, masks_to_submission, gen_four_split
+from postprocessing import four_split_mean, predictions_to_masks, masks_to_submission
 from preprocessing import extract_data
-from setup_env import check_env, prepare_test, prepare_train
+from setup_env import check_env, prepare_test, prepare_train, gen_four_split
 
 
 REGENERATE_FOUR_SPLIT = False

@@ -1,8 +1,11 @@
 
 import os
 from shutil import copyfile
+from PIL import Image
 
-from common import GET_VERBOSE_PRINT, TRAIN_IMG_PATH, TRAIN_GT_PATH, SPLIT_TRAIN_INDICES, SPLIT_VALID_INDICES, SPLIT_TRAIN_IMG_PATH, SPLIT_TRAIN_GT_PATH, SPLIT_VAL_IMG_PATH, SPLIT_VAL_GT_PATH
+from common import TESTING_PATH_FOURSPLIT, TEST_PATH, GET_VERBOSE_PRINT, TRAIN_IMG_PATH, TRAIN_GT_PATH,\
+                    SPLIT_TRAIN_INDICES, SPLIT_VALID_INDICES, SPLIT_TRAIN_IMG_PATH, SPLIT_TRAIN_GT_PATH,\
+                    SPLIT_VAL_IMG_PATH,  SPLIT_VAL_GT_PATH
 
 """
 Methods to setup the required environement for the project
@@ -20,11 +23,11 @@ ENV = {
             "foursplit" : {},
         },
         "split" : {
-            "training" : {
+            "train" : {
                 "image" : {},
                 "label" : {},
             },
-            "validation" : {
+            "val" : {
                 "image" : {},
                 "label" : {},
             },
@@ -70,7 +73,7 @@ def complete_env(root_folder, *, verbose=False):
         if os.path.isdir(d):
             continue
             #raise EnvironmentError(f"Found a pre-existing directory at {d}. Aborting.")
-        vprint(f"complete_env is making folder {d} because none pre-existing was found.")
+        vprint(f"[ENV] complete_env is making folder {d} because none pre-existing was found.")
         os.makedirs(d)
 
 def check_env(root_folder, *, verbose=False):
@@ -85,10 +88,30 @@ def check_env(root_folder, *, verbose=False):
     vprint = GET_VERBOSE_PRINT(verbose)
     for d in get_paths(ENV, acc_path=root_folder):
         if not os.path.isdir(d):
-            vprint(f"Could not find subdirectory {d}.")
+            vprint(f"[ENV] Could not find subdirectory {d}.")
             return d
-        vprint(f"Found subdirectory {d}.")
+        vprint(f"[ENV] Found subdirectory {d}.")
     return None
+
+def gen_four_split(original_images_dir, foursplit_dir):
+    """
+    Generate four splits images
+    """
+    fnames = os.listdir(original_images_dir)
+    fnames.sort()
+    for fn in fnames:
+        if not "png" in fn: continue
+        original_index = int(fn.replace("test_", '').replace(".png", ''))
+        fpath = os.path.join(original_images_dir, fn)
+        print(fpath)
+        oim = Image.open(fpath)
+        oim_name = os.path.basename(fpath)
+        crops = [oim.crop(area) for area in ((0,0,400,400),(0,208,400,608),(208,0,608,400),(208,208,608,608))]
+        for i, crop in enumerate(crops):
+            imageid = "test_%.3d" % (4*(original_index-1) + i + 1)
+            crop_save_path = os.path.join(foursplit_dir, f"{imageid}.png")
+            print(i, original_index, fn, crop_save_path)
+            crop.save(crop_save_path)
 
 def prepare_train(root_folder, *, verbose=False):
     """
@@ -103,32 +126,35 @@ def prepare_train(root_folder, *, verbose=False):
     vprint = GET_VERBOSE_PRINT(verbose)
 
     missing = check_env(root_folder)
-    vprint(f"check_env on {root_folder} returned {missing}")
     if not missing:
+        vprint(f"[ENV] No missing folder in the environement.")
         return
+    vprint(f"[ENV] Some folders in the environment at {root_folder} are missing ({missing} first missing found). Recreating environment.")
 
     assert os.path.isdir(os.path.join(root_folder, "training/")), f"The training/ dataset folder was not found in {root_folder}."
     complete_env(root_folder, verbose=verbose)
 
     img_dir_path, gt_dir_path = (os.path.join(root_folder, "training", subf) for subf in ("images", "groundtruth"))
-    vprint(f"Using images and groundtruth folders {img_dir_path}, {gt_dir_path}")
+    vprint(f"[ENV] Using images and groundtruth folders {img_dir_path}, {gt_dir_path}")
 
     for fimg in os.listdir(img_dir_path):        
         fpath = os.path.join(img_dir_path, fimg)
         new_path = os.path.join(TRAIN_IMG_PATH, fimg)
-        vprint(f"Moving file {fpath} to {new_path}")
+        vprint(f"[ENV] Copying file {fpath} to {new_path}")
         copyfile(fpath, new_path)
         img_idx = int(fimg.split("_")[1].split(".")[0])
         new_split_path = os.path.join(root_folder, SPLIT_TRAIN_IMG_PATH if img_idx in SPLIT_TRAIN_INDICES else SPLIT_VAL_IMG_PATH, fimg)
+        vprint(f"[ENV] Copying file {fpath} to {new_split_path}")
         copyfile(fpath, new_split_path)
 
     for fgt in os.listdir(gt_dir_path):        
         fpath = os.path.join(gt_dir_path, fgt)
         new_path = os.path.join(TRAIN_GT_PATH, fgt)
-        vprint(f"Moving file {fpath} to {new_path}")
+        vprint(f"[ENV] Copying file {fpath} to {new_path}")
         copyfile(fpath, new_path)
         img_idx = int(fgt.split("_")[1].split(".")[0])
         new_split_path = os.path.join(root_folder, SPLIT_TRAIN_GT_PATH if img_idx in SPLIT_TRAIN_INDICES else SPLIT_VAL_GT_PATH, fgt)
+        vprint(f"[ENV] Copying file {fpath} to {new_split_path}")
         copyfile(fpath, new_split_path)
     
 def prepare_test(root_folder, *, verbose=False):
@@ -144,9 +170,23 @@ def prepare_test(root_folder, *, verbose=False):
     vprint = GET_VERBOSE_PRINT(verbose)
 
     missing = check_env(root_folder)
-    vprint(f"check_env on {root_folder} returned {missing}")
+    vprint(f"[ENV] check_env on {root_folder} returned {missing}")
     if not missing:
         return
 
-    assert os.path.isdir(os.path.join(root_folder, "test_set_images/")), f"The test_set_images/ dataset folder was not found in {root_folder}."
+    test_img_folder = os.path.join(TEST_PATH, "image")
+    test_img_folders_root = os.path.join(root_folder, "test_set_images/") 
+    assert os.path.isdir(test_img_folders_root), f"The test_set_images/ dataset folder was not found in {root_folder}."
     complete_env(root_folder, verbose=verbose)
+
+    for original_test_img_folder in os.listdir(test_img_folders_root):
+        original_test_img_folder_path = os.path.join(test_img_folders_root, original_test_img_folder)
+        for img in os.listdir(original_test_img_folder_path):
+            fpath = os.path.join(original_test_img_folder_path, img)
+            imgidx = int(img.split("_")[1].split(".")[0])
+            new_fname = "test_%.3d.png" % imgidx
+            new_path = os.path.join(test_img_folder, new_fname)
+            vprint(f"[ENV] Moving file {fpath} to {new_path}")
+            copyfile(fpath, new_path)
+
+    gen_four_split(test_img_folder, os.path.join(root_folder, TESTING_PATH_FOURSPLIT))
