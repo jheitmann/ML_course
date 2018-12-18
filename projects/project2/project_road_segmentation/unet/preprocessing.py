@@ -6,7 +6,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from common import PIXEL_DEPTH
 
 
-def extract_data(image_path, num_images, img_height, as_rgb, verbose=True):
+def extract_data(image_path, num_images, img_height, as_rgb, *, verbose=True):
     """
     Extract the images into a 4D tensor [image index, y, x, channels].
     Values are rescaled from [0, 255] down to [0, 1].
@@ -26,7 +26,7 @@ def extract_data(image_path, num_images, img_height, as_rgb, verbose=True):
     img_filenames = [os.path.join(image_path, fn) for fn in os.listdir(image_path)]
     img_filenames.sort()
 
-    for filename in img_filenames[:num_images]: 
+    for filename in img_filenames[:num_images]:
         if verbose:
             print(f"Loading {filename}")
         img = cv2.imread(filename, as_rgb)
@@ -39,7 +39,7 @@ def extract_data(image_path, num_images, img_height, as_rgb, verbose=True):
 
     return np.array(imgs)
 
-def extract_labels(label_path, num_images, img_height, verbose=True):
+def extract_labels(label_path, num_images, img_height, *, verbose=True):
     """
     Extract the labels into a 1-hot matrix [image index, label index].
     Args:

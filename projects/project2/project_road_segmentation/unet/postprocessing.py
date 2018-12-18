@@ -324,24 +324,3 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     vprint("recall", recall)
     f1_score = 2/(1/precision + 1/recall)
     return f1_score
-
-
-def gen_four_split(original_images_dir, foursplit_dir):
-    """
-    Draft implementation of four_split method
-    """
-    fnames = os.listdir(original_images_dir)
-    fnames.sort()
-    for fn in fnames:
-        if not "png" in fn: continue
-        original_index = int(fn.replace("test_", '').replace(".png", ''))
-        fpath = os.path.join(original_images_dir, fn)
-        print(fpath)
-        oim = Image.open(fpath)
-        oim_name = os.path.basename(fpath)
-        crops = [oim.crop(area) for area in ((0,0,400,400),(0,208,400,608),(208,0,608,400),(208,208,608,608))]
-        for i, crop in enumerate(crops):
-            imageid = "test_%.3d" % (4*(original_index-1) + i + 1)
-            crop_save_path = os.path.join(foursplit_dir, f"{imageid}.png")
-            print(i, original_index, fn, crop_save_path)
-            crop.save(crop_save_path)
