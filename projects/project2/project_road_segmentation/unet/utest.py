@@ -9,15 +9,16 @@ from preprocessing import extract_data
 from setup_env import check_env, prepare_test, prepare_train, gen_four_split
 
 
-def main(ckpt_path, four_split, use_max, training, foreground_threshold=0.25):
+def main(ckpt_path, four_split, use_max, training, *, foreground_threshold=0.25, root_folder=None):
     """
     Args:
         ckpt_path: path of model Checkpoint
         t: bool set True if training and not testing set should be predicted
         four_split: bool set True if four predictions should be computed per test image, and then combined
         foreground_threshold: threshold used to determine when to label a path as 'foreground'
+        root_folder: use to override root_folder=os.getcwd (Typically when using main() in Google Colab)
     """
-    prepare_test(os.getcwd(), verbose=True)
+    prepare_test(os.getcwd() if not root_folder else root_folder, verbose=True)
 
     img_height = int(os.path.basename(ckpt_path).split("_")[2].split('.')[0]) # extract the image height from the checkpoint file name
     rgb = "rgb" in ckpt_path
