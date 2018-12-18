@@ -12,7 +12,7 @@ from setup_env import check_env, prepare_train
 
 
 def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor=None,
-        pretrained_weights=None, chosen_validation=True, use_reducelr=True):
+        pretrained_weights=None, chosen_validation=False, use_reducelr=True):
     """
     Args:
         img_height: size into which images and masks are resampled, and with which the keras model InputLayer is defined
@@ -101,7 +101,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
                                                                 data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode) # save_to_dir=AUG_SAVE_PATH
         # Create validation parameters dict. passed to fit_generator(.) if using validation split in (0;1) else create an empty parameter dict
         validation_params = dict(validation_data=validation_data, validation_steps=(common.N_TRAIN_IMAGES - steps_per_epoch)) if "validation_split" in data_gen_args or chosen_validation else {}
-        model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint, reduce_lr], **validation_params)
+        model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], **validation_params) #, reduce_lr
     
     return ckpt_file
 
