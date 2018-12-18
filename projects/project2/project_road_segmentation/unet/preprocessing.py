@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
 import os
+from datetime import datetime
+from keras.callbacks import ModelCheckpoint
 from keras.preprocessing.image import ImageDataGenerator
 
-from common import PIXEL_DEPTH
+from common import PIXEL_DEPTH, RESULTS_PATH
 
 
 def extract_data(image_path, num_images, img_height, as_rgb, verbose=True):
@@ -69,6 +71,13 @@ def extract_labels(label_path, num_images, img_height, verbose=True):
         gt_imgs.append(labels)
 
     return np.array(gt_imgs)
+
+def get_checkpoint(img_height, rgb, monitor):
+    hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
+    print("hdf5 name:", hdf5_name)
+    
+    ckpt_file = os.path.join(RESULTS_PATH, hdf5_name)
+    return ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
 
 def split_data(x, y, ratio, seed=1):
     """

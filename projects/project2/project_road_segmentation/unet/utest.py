@@ -14,7 +14,7 @@ REGENERATE_FOUR_SPLIT = False
 
 
 def main(ckpt_path, t, four_split, foreground_threshold=0.25): # change to p_threshold
-    prepare_test(os.getcwd(), verbose=True)
+    #prepare_test(os.getcwd(), verbose=True)
 
     rgb = "rgb" in ckpt_path
     n_channels = 3 if rgb else 1
@@ -25,12 +25,12 @@ def main(ckpt_path, t, four_split, foreground_threshold=0.25): # change to p_thr
         assert not t, "Four split on training dataset is a bad idea (images already at correct scale)"
         if REGENERATE_FOUR_SPLIT:
             gen_four_split(TEST_IMG_PATH, TESTING_PATH_FOURSPLIT)
-        imgs = extract_data(TESTING_PATH_FOURSPLIT, "test_", N_TEST_IMAGES * 4, img_height, rgb)
+        imgs = extract_data(TESTING_PATH_FOURSPLIT, N_TEST_IMAGES * 4, img_height, rgb)
     else:
         if t:
-            imgs = extract_data(TRAIN_IMG_PATH, "satImage_", N_TRAIN_IMAGES, img_height, rgb)
+            imgs = extract_data(TRAIN_IMG_PATH, N_TRAIN_IMAGES, img_height, rgb)
         else:
-            imgs = extract_data(TEST_IMG_PATH, "test_", N_TEST_IMAGES, img_height, rgb)
+            imgs = extract_data(TEST_IMG_PATH, N_TEST_IMAGES, img_height, rgb)
     
     print('ckpt', ckpt_path) # ckpt_file    
     
@@ -46,7 +46,7 @@ def main(ckpt_path, t, four_split, foreground_threshold=0.25): # change to p_thr
     test_name = os.path.join(TRAIN_IMG_PATH, "satImage") if t else os.path.join(TEST_IMG_PATH, "test")
     output_height = TRAIN_IMG_HEIGHT if t or four_split else TEST_IMG_HEIGHT
     predicted_mask_files = predictions_to_masks(result_path, test_name, preds, output_height, 
-                                                    four_split, TEST_IMG_HEIGHT, use_mean=False) # True
+                                                    four_split, TEST_IMG_HEIGHT, use_mean=True) # False
     
     print('Generating submission at', SUBM_PATH)
     masks_to_submission(SUBM_PATH, predicted_mask_files, foreground_threshold=foreground_threshold)
