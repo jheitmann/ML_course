@@ -12,7 +12,7 @@ from setup_env import check_env, prepare_train
 
 
 def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, monitor=None,
-        pretrained_weights=None, chosen_validation=False, use_reducelr=True):
+        pretrained_weights=None, chosen_validation=True, use_reducelr=True):
     """
     Args:
         img_height: size into which images and masks are resampled, and with which the keras model InputLayer is defined
@@ -27,7 +27,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
     Raises:
         AssertionError: when encountering discrepancies in pretrained_weights/current_model rgb,aug,img_height parameters
     """
-    prepare_train(os.getcwd(), verbose=True)
+    #prepare_train(os.getcwd(), verbose=True)
 
     if pretrained_weights:
         assert str(img_height) in pretrained_weights, "Wrong img_height pretrained weights"
@@ -94,10 +94,10 @@ def main(img_height, batch_size, epochs, steps_per_epoch, rgb=False, aug=False, 
 
         if chosen_validation:
             train_generator, _ = get_generators(batch_size, common.SPLIT_TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
-                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode) # save_to_dir=AUG_SAVE_PATH
+                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode) # save_to_dir=common.AUG_SAVE_PATH
         else: 
             train_generator, validation_data = get_generators(batch_size, common.TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
-                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode) # save_to_dir=AUG_SAVE_PATH
+                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode) # save_to_dir=common.AUG_SAVE_PATH
         # Create validation parameters dict. passed to fit_generator(.) if using validation split in (0;1) else create an empty parameter dict
         validation_params = dict(validation_data=validation_data, validation_steps=(common.N_TRAIN_IMAGES - steps_per_epoch)) if "validation_split" in data_gen_args or chosen_validation else {}
         model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], **validation_params) #, reduce_lr
