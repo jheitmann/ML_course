@@ -108,4 +108,4 @@ if __name__=="__main__":
                         default="", help="monitor metric for checkpoint")
     args = parser.parse_args()
 
-    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.augmented, args.chosen_validation, args.rgb_images, args.pretrained_weights, args.monitor)
+    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.augmented, args.chosen_validation, args.rgb_images, args.preweights, args.monitor)
