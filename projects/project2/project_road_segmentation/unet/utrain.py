@@ -17,11 +17,11 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
         batch_size: size of batches used in training
         epochs: number of training epochs
         steps_per_epoch: number of steps of training out of total steps, remaining steps are used for validation 
-        rgb: bool set True when using 3 channels for using. Otherwise, channels are averaged into greyscale for training
         aug: bool set True for augmenting the original dataset with transformations such as rotations and flips
-        monitor: [acc|loss|val_acc|val_loss] name of metric used for keeping checkpoints. val_* are only usable when steps_per_epoch < |steps|
+        chosen_validation: bool set True when model is validated on a chosen dataset, instead of a random one
+        rgb: bool set True when using 3 channels. Otherwise, channels are averaged into greyscale for training
         pretrained_weights: optional path to a past checkpoint, which is then used as initial weights for training
-        use_reducelr: bool set True for using a ReduceLROnPlateau callback, rescaling the learning rate in case of stagnating training performance
+        monitor: [acc|loss|val_acc|val_loss] name of metric used for keeping checkpoints. val_* are only usable when steps_per_epoch < |steps|
     Raises:
         AssertionError: when encountering discrepancies in pretrained_weights/current_model rgb,aug,img_height parameters
     """
@@ -67,7 +67,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
             imgs = extract_data(common.TRAIN_IMG_PATH, common.N_TRAIN_IMAGES, img_height, rgb)
             gt_imgs = extract_labels(common.TRAIN_GT_PATH, common.N_TRAIN_IMAGES, img_height)
 
-        model_checkpoint = get_checkpoint(img_height, rgb, monitor)
+        ckpt_file, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
         model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1, validation_split=validation_split, 
                     validation_data=validation_params['validation_data'], shuffle=False, callbacks=[model_checkpoint])
         
@@ -78,16 +78,17 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
         # save_to_dir=common.AUG_SAVE_PATH
         if chosen_validation:
             train_generator, _ = get_generators(batch_size, common.SPLIT_TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
-                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)   
+                                                    data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)   
         else:
             data_gen_args["validation_split"] = validation_split 
             train_generator, validation_generator = get_generators(batch_size, common.TRAIN_PATH, common.IMG_SUBFOLDER, common.GT_SUBFOLDER, 
-                                                                data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)
+                                                                    data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)
             validation_params["validation_data"] = validation_generator 
         
-        model_checkpoint = get_checkpoint(img_height, rgb, monitor)
+        ckpt_file, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
         model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], **validation_params)
     
+    return ckpt_file
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()

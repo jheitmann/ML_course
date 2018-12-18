@@ -75,19 +75,19 @@ def extract_labels(label_path, num_images, img_height, *, verbose=True):
 
 def get_checkpoint(img_height, rgb, monitor):
     """
-    Extract the labels into a 1-hot matrix [image index, label index].
+    Given the input parameters of utrain.py, create a Keras Checkpoint
     Args:
         img_height: resized image target width/height
-        rgb: size 0 of returned tensor, ammount of extracted images
-        monitor: resized image target width/height 
+        rgb: bool set True when using 3 channels
+        monitor: [acc|loss|val_acc|val_loss] name of metric used for keeping checkpoints
     Returns:
-        1-hot matrix [image index, label index]
+        Filename and the Checkpoint itself
     """
     hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
     print("hdf5 name:", hdf5_name)
     
     ckpt_file = os.path.join(RESULTS_PATH, hdf5_name)
-    return ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
+    return ckpt_file, ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
 
 
 def convert_01(image, label):
