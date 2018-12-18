@@ -10,7 +10,7 @@ from preprocessing import extract_data, extract_labels, get_checkpoint, get_gene
 from setup_env import check_env, prepare_train
 
 
-def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation, rgb, pretrained_weights, monitor):
+def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation, rgb, pretrained_weights, monitor, *, root_folder=None):
     """
     Args:
         img_height: size into which images and masks are resampled, and with which the keras model InputLayer is defined
@@ -22,10 +22,11 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
         rgb: bool set True when using 3 channels. Otherwise, channels are averaged into greyscale for training
         pretrained_weights: optional path to a past checkpoint, which is then used as initial weights for training
         monitor: [acc|loss|val_acc|val_loss] name of metric used for keeping checkpoints. val_* are only usable when steps_per_epoch < |steps|
+        root_folder: use to override root_folder=os.getcwd (Typically when using main() in Google Colab)
     Raises:
         AssertionError: when encountering discrepancies in pretrained_weights/current_model rgb,aug,img_height parameters
     """
-    prepare_train(os.getcwd(), verbose=True)
+    prepare_train(os.getcwd() if not root_folder else root_folder, verbose=True)
 
     n_channels = 3 if rgb else 1
     validation_split = (common.N_TRAIN_IMAGES - steps_per_epoch) / float(common.N_TRAIN_IMAGES)
