@@ -26,6 +26,12 @@ SPLIT_VAL_GT_PATH = os.path.join(SPLIT_VAL_PATH, GT_SUBFOLDER)
 SPLIT_VALID_INDICES = [26, 33, 65, 82, 83, 84, 85, 86, 87, 88, 89, 90, 92, 93, 94, 95, 97, 98, 99, 100]
 SPLIT_TRAIN_INDICES = [idx for idx in range(1, N_TRAIN_IMAGES) if not idx in SPLIT_VALID_INDICES]
 
+DEFAULT_GEN_ARGS = dict(
+    rotation_range=90,
+    fill_mode='reflect',
+    horizontal_flip=True,
+    vertical_flip=True)
+
 #utest
 TEST_IMG_PATH = os.path.join(TEST_PATH, IMG_SUBFOLDER)
 

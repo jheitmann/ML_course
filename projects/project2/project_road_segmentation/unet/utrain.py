@@ -9,7 +9,8 @@ from preprocessing import extract_data, extract_labels, get_checkpoint, get_gene
 from setup_env import check_env, prepare_train
 
 
-def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation, rgb, pretrained_weights, monitor, *, root_folder=None):
+def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation, rgb,
+    pretrained_weights, monitor, *, data_gen_args=common.DEFAULT_GEN_ARGS, root_folder=None):
     """
     Args:
         img_height: size into which images and masks are resampled, and with which the keras model InputLayer is defined
@@ -22,6 +23,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
         pretrained_weights: optional path to a past checkpoint, which is then used as initial weights for training
         monitor: [acc|loss|val_acc|val_loss] name of metric used for keeping checkpoints. val_* are only usable when steps_per_epoch < |steps|
         root_folder: use to override root_folder=os.getcwd (Typically when using main() in Google Colab)
+        data_gen_args: args passed to each ImageDataGenerator used during training.
     Raises:
         AssertionError: when encountering discrepancies in pretrained_weights/current_model rgb, img_height parameters
     """
@@ -72,7 +74,6 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
                     validation_data=validation_params['validation_data'], shuffle=False, callbacks=[model_checkpoint])
         
     else:
-        data_gen_args = dict(rotation_range=90, fill_mode='reflect', horizontal_flip=True, vertical_flip=True)
         color_mode = "rgb" if rgb else "grayscale"
 
         # save_to_dir=common.AUG_SAVE_PATH
@@ -107,6 +108,20 @@ if __name__=="__main__":
     parser.add_argument("-pre", "--preweights", type=str, help="path to pretrained weights")
     parser.add_argument("--monitor", type=str, choices=["acc", "loss", "val_acc", "val_loss"],
                         default="", help="monitor metric for checkpoint")
+    parser.add_argument("--rot", type=float,
+                        help="rotation augmentation for ImageDataGenerator (default:90)")
+    paser.add_argument("--zoom", type=float,
+                        help="zoom augmentation for ImageDataGenerator (default:None)")
+    parser.add_argument("--shift", type=float,
+                        help="shift (x and y) augmentation for ImageDataGenerator (default:None)")
     args = parser.parse_args()
-
-    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.augmented, args.chosen_validation, args.rgb_images, args.preweights, args.monitor)
+    print(args.rot, args.shift, args.zoom)
+    data_gen_args = dict(
+        rotation_range=args.rot if args.rot else common.DEFAULT_GEN_ARGS.rotation,
+        width_shift_range=args.shift if args.shift else 0,
+        height_shift_range=args.shift if args.shift else 0,
+        zoom_range=args.zoom if args.zoom else 0  
+    )
+    main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.augmented,
+        args.chosen_validation, args.rgb_images, args.preweights, args.monitor,
+        data_gen_args=data_gen_args)
