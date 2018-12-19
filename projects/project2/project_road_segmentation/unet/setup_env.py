@@ -41,6 +41,7 @@ ENV = {
             "logits" : {},
             "overlay" : {},
         },
+        "logdir" : {},
     },
 }
 
