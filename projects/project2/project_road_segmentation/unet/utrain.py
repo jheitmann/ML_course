@@ -62,6 +62,9 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
     print("Using {} dataset {} chosen validation for training".format("raw" if not aug else "augmented", "with" if chosen_validation else "without"))
     print("Monitoring with", monitor)
     
+    file_id, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
+    # Create CSVLogger callback to retrieve the metrics history
+    log_filename = file_id + ".csv"
     if not aug:
         if chosen_validation:
             imgs = extract_data(common.SPLIT_TRAIN_IMG_PATH, common.N_SPLIT_TRAIN, img_height, rgb)
@@ -70,9 +73,6 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
             imgs = extract_data(common.TRAIN_IMG_PATH, common.N_TRAIN_IMAGES, img_height, rgb)
             gt_imgs = extract_labels(common.TRAIN_GT_PATH, common.N_TRAIN_IMAGES, img_height)
 
-        file_id, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
-        # Create CSVLogger callback to retrieve the metrics history
-        log_filename = file_id + ".csv"
         model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
             validation_split=validation_split, validation_data=validation_params['validation_data'],
             shuffle=False, callbacks=[model_checkpoint, CSVLogger(log_filename)])
@@ -90,9 +90,6 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
                                                                     data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)
             validation_params["validation_data"] = validation_generator 
         
-        file_id, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
-        # Create CSVLogger callback to retrieve the metrics history
-        log_filename = file_id + ".csv"
         model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs,
             verbose=1, callbacks=[model_checkpoint, CSVLogger(log_filename)], **validation_params)
     
