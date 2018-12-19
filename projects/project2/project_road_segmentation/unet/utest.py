@@ -24,7 +24,7 @@ def main(ckpt_path, four_split, use_max, training, *, foreground_threshold=0.25,
     rgb = "rgb" in ckpt_path
     n_channels = 3 if rgb else 1    
     input_size = (img_height,img_height,n_channels)
-    model = unet(input_size, pretrained_weights=ckpt_path)
+    model = unet(input_size, pretrained_weights=ckpt_path, seed=common.SEED)
 
     print('Neural network input size:', input_size)
 

@@ -4,9 +4,6 @@ import numpy as np
 import os
 from PIL import Image
 
-from common import PIXEL_DEPTH, IMG_PATCH_SIZE, PIXEL_THRESHOLD, PREDS_PER_IMAGE, AREAS
-
-
 def img_float_to_uint8(img):
     """
     Converts the img np.array to corresponding uint8 np.array
@@ -16,7 +13,7 @@ def img_float_to_uint8(img):
         resulting np.array
     """
     rimg = img - np.min(img)
-    rimg = (rimg / np.max(rimg) * PIXEL_DEPTH).round().astype(np.uint8)
+    rimg = (rimg / np.max(rimg) * common.PIXEL_DEPTH).round().astype(np.uint8)
     return rimg
 
 
@@ -61,16 +58,16 @@ def four_split_mean(masks, output_height):
         np.array of shape [N, OUTPUT_HEIGHT, OUTPUT_HEIGHT] 
     """
     num_preds = masks.shape[0]
-    n_imgs = int(num_preds / PREDS_PER_IMAGE)
+    n_imgs = int(num_preds / common.PREDS_PER_IMAGE)
     preds_height = masks.shape[1]
     print(f"Input shape: {masks.shape}")
-    grouped_preds = masks.reshape((n_imgs, PREDS_PER_IMAGE, preds_height, preds_height))
+    grouped_preds = masks.reshape((n_imgs, common.PREDS_PER_IMAGE, preds_height, preds_height))
     print(f"Grouped shape: {grouped_preds.shape}")
     
     averaged_preds = []
     onemat = np.ones((preds_height,preds_height), dtype=np.uint8)
     divmat = np.zeros((output_height,output_height), dtype=np.uint8)
-    for area in AREAS:
+    for area in common.AREAS:
         x0,y0,x1,y1 = area
         divmat[x0:x1,y0:y1] += onemat
 
@@ -78,9 +75,9 @@ def four_split_mean(masks, output_height):
         four_preds = grouped_preds[i]
         output = np.zeros((output_height,output_height))
         
-        for partial_pred_idx in range(PREDS_PER_IMAGE):
+        for partial_pred_idx in range(common.PREDS_PER_IMAGE):
             partial_pred = four_preds[partial_pred_idx]
-            x0,y0,x1,y1 = AREAS[partial_pred_idx]
+            x0,y0,x1,y1 = common.AREAS[partial_pred_idx]
             output[x0:x1,y0:y1] += partial_pred
 
         output = (output / divmat).astype("uint8")
@@ -100,21 +97,21 @@ def four_split_max(masks, output_height):
         np.array of shape [N, OUTPUT_HEIGHT, OUTPUT_HEIGHT] 
     """
     num_preds = masks.shape[0]
-    n_imgs = int(num_preds / PREDS_PER_IMAGE)
+    n_imgs = int(num_preds / common.PREDS_PER_IMAGE)
     preds_height = masks.shape[1]
     print(f"Input shape: {masks.shape}")
-    grouped_preds = masks.reshape((n_imgs, PREDS_PER_IMAGE, preds_height, preds_height))
+    grouped_preds = masks.reshape((n_imgs, common.PREDS_PER_IMAGE, preds_height, preds_height))
     print(f"Grouped shape: {grouped_preds.shape}")
     
     max_preds = []
 
     for i in range(n_imgs):
         four_preds = grouped_preds[i]
-        output = np.zeros((PREDS_PER_IMAGE,output_height,output_height))
+        output = np.zeros((common.PREDS_PER_IMAGE,output_height,output_height))
         
-        for partial_pred_idx in range(PREDS_PER_IMAGE):
+        for partial_pred_idx in range(common.PREDS_PER_IMAGE):
             partial_pred = four_preds[partial_pred_idx]
-            x0,y0,x1,y1 = AREAS[partial_pred_idx]
+            x0,y0,x1,y1 = common.AREAS[partial_pred_idx]
             output[partial_pred_idx,x0:x1,y0:y1] += partial_pred
 
         output = output.max(axis=0)
@@ -154,7 +151,7 @@ def convert_predictions(logits_masks, output_height, four_split, averaged_preds_
 
     predicted_mask_files = []
     predicted_masks_scaled = np.zeros(logits_masks_scaled.shape)
-    predicted_masks_scaled[logits_masks_scaled > PIXEL_THRESHOLD] = 255
+    predicted_masks_scaled[logits_masks_scaled > common.PIXEL_THRESHOLD] = 255
     
     for i in range(1, logits_masks_scaled.shape[0]+1):
         filename = "_%.3d" % i
@@ -206,7 +203,7 @@ def predictions_to_masks(result_path, test_name, preds, output_height, four_spli
     logits_path = os.path.join(result_path, logits_folder)
     overlay_path = os.path.join(result_path, overlay_folder)
 
-    logits_masks = preds * PIXEL_DEPTH
+    logits_masks = preds * common.PIXEL_DEPTH
     logits_masks = np.round(logits_masks).astype('uint8')
     logits_masks = np.squeeze(logits_masks)
  
@@ -237,10 +234,10 @@ def mask_to_submission_strings(image_filename, foreground_threshold=0.25):
     
     # Read mask into np.array
     im = mpimg.imread(image_filename)
-    for j in range(0, im.shape[1], IMG_PATCH_SIZE):
-        for i in range(0, im.shape[0], IMG_PATCH_SIZE):
+    for j in range(0, im.shape[1], common.IMG_PATCH_SIZE):
+        for i in range(0, im.shape[0], common.IMG_PATCH_SIZE):
             # Get patch np.array from image np.array
-            patch = im[i:i + IMG_PATCH_SIZE, j:j + IMG_PATCH_SIZE]
+            patch = im[i:i + common.IMG_PATCH_SIZE, j:j + common.IMG_PATCH_SIZE]
             # Convert to corresp. label
             label = patch_to_label(patch, foreground_threshold)
             # Yield resulting string

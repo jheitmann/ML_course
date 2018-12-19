@@ -2,9 +2,7 @@ import os
 from shutil import copyfile
 from PIL import Image
 
-from common import TESTING_PATH_FOURSPLIT, TEST_PATH, GET_VERBOSE_PRINT, TRAIN_IMG_PATH, TRAIN_GT_PATH,\
-                    SPLIT_TRAIN_INDICES, SPLIT_VALID_INDICES, SPLIT_TRAIN_IMG_PATH, SPLIT_TRAIN_GT_PATH,\
-                    SPLIT_VAL_IMG_PATH,  SPLIT_VAL_GT_PATH
+import common
 
 """
 Methods to setup the required environement for the project
@@ -67,7 +65,7 @@ def complete_env(root_folder, *, verbose=False):
     Raises:
         EnvironementError: when an existing directory that should be created is found on disk
     """
-    vprint = GET_VERBOSE_PRINT(verbose)
+    vprint = common.GET_VERBOSE_PRINT(verbose)
     for d in get_paths(ENV, acc_path=root_folder):
         if os.path.isdir(d):
             continue
@@ -84,7 +82,7 @@ def check_env(root_folder, *, verbose=False):
     Returns:
         The first missing folder path, or None in success case
     """
-    vprint = GET_VERBOSE_PRINT(verbose)
+    vprint = common.GET_VERBOSE_PRINT(verbose)
     for d in get_paths(ENV, acc_path=root_folder):
         if not os.path.isdir(d):
             vprint(f"[ENV] Could not find subdirectory {d}.")
@@ -122,7 +120,7 @@ def prepare_train(root_folder, *, verbose=False):
         AssertionError: when the training/ original dataset is not found in root_folder
     """
     
-    vprint = GET_VERBOSE_PRINT(verbose)
+    vprint = common.GET_VERBOSE_PRINT(verbose)
 
     missing = check_env(root_folder)
     if not missing:
@@ -138,21 +136,27 @@ def prepare_train(root_folder, *, verbose=False):
 
     for fimg in os.listdir(img_dir_path):        
         fpath = os.path.join(img_dir_path, fimg)
-        new_path = os.path.join(TRAIN_IMG_PATH, fimg)
+        new_path = os.path.join(common.TRAIN_IMG_PATH, fimg)
         vprint(f"[ENV] Copying file {fpath} to {new_path}")
         copyfile(fpath, new_path)
         img_idx = int(fimg.split("_")[1].split(".")[0])
-        new_split_path = os.path.join(root_folder, SPLIT_TRAIN_IMG_PATH if img_idx in SPLIT_TRAIN_INDICES else SPLIT_VAL_IMG_PATH, fimg)
+        new_split_path = os.path.join(
+            root_folder,
+            common.SPLIT_TRAIN_IMG_PATH if img_idx in common.SPLIT_TRAIN_INDICES else common.SPLIT_VAL_IMG_PATH,
+            fimg)
         vprint(f"[ENV] Copying file {fpath} to {new_split_path}")
         copyfile(fpath, new_split_path)
 
     for fgt in os.listdir(gt_dir_path):        
         fpath = os.path.join(gt_dir_path, fgt)
-        new_path = os.path.join(TRAIN_GT_PATH, fgt)
+        new_path = os.path.join(common.TRAIN_GT_PATH, fgt)
         vprint(f"[ENV] Copying file {fpath} to {new_path}")
         copyfile(fpath, new_path)
         img_idx = int(fgt.split("_")[1].split(".")[0])
-        new_split_path = os.path.join(root_folder, SPLIT_TRAIN_GT_PATH if img_idx in SPLIT_TRAIN_INDICES else SPLIT_VAL_GT_PATH, fgt)
+        new_split_path = os.path.join(
+            root_folder,
+            common.SPLIT_TRAIN_GT_PATH if img_idx in common.SPLIT_TRAIN_INDICES else common.SPLIT_VAL_GT_PATH,
+            fgt)
         vprint(f"[ENV] Copying file {fpath} to {new_split_path}")
         copyfile(fpath, new_split_path)
     
@@ -166,14 +170,14 @@ def prepare_test(root_folder, *, verbose=False):
         AssertionError: when the training/ original dataset is not found in root_folder
     """
 
-    vprint = GET_VERBOSE_PRINT(verbose)
+    vprint = common.GET_VERBOSE_PRINT(verbose)
 
     missing = check_env(root_folder)
     vprint(f"[ENV] check_env on {root_folder} returned {missing}")
     if not missing:
         return
 
-    test_img_folder = os.path.join(TEST_PATH, "image")
+    test_img_folder = os.path.join(common.TEST_PATH, "image")
     test_img_folders_root = os.path.join(root_folder, "test_set_images/") 
     assert os.path.isdir(test_img_folders_root), f"The test_set_images/ dataset folder was not found in {root_folder}."
     complete_env(root_folder, verbose=verbose)
@@ -188,4 +192,4 @@ def prepare_test(root_folder, *, verbose=False):
             vprint(f"[ENV] Moving file {fpath} to {new_path}")
             copyfile(fpath, new_path)
 
-    gen_four_split(test_img_folder, os.path.join(root_folder, TESTING_PATH_FOURSPLIT))
+    gen_four_split(test_img_folder, os.path.join(root_folder, common.TESTING_PATH_FOURSPLIT))

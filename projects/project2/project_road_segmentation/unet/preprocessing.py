@@ -5,8 +5,7 @@ from datetime import datetime
 from keras.callbacks import ModelCheckpoint
 from keras.preprocessing.image import ImageDataGenerator
 
-from common import PIXEL_DEPTH, RESULTS_PATH, SEED
-
+import common
 
 def extract_data(image_path, num_images, img_height, as_rgb, *, verbose=True):
     """
@@ -35,7 +34,7 @@ def extract_data(image_path, num_images, img_height, as_rgb, *, verbose=True):
         if not as_rgb:
             img = img[..., np.newaxis]
         img = img.astype('float32')
-        img /= PIXEL_DEPTH
+        img /= common.PIXEL_DEPTH
         imgs.append(img)            
 
     return np.array(imgs)
@@ -65,7 +64,7 @@ def extract_labels(label_path, num_images, img_height, *, verbose=True):
         labels = cv2.resize(labels, (img_height, img_height))
         labels = labels[..., np.newaxis]
         labels = labels.astype('float32')
-        labels /= PIXEL_DEPTH
+        labels /= common.PIXEL_DEPTH
         labels[labels >= 0.5] = 1
         labels[labels < 0.5] = 0
         gt_imgs.append(labels)
@@ -86,7 +85,7 @@ def get_checkpoint(img_height, rgb, monitor):
     hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
     print("hdf5 name:", hdf5_name)
     
-    ckpt_file = os.path.join(RESULTS_PATH, hdf5_name)
+    ckpt_file = os.path.join(common.RESULTS_PATH, hdf5_name)
     return ckpt_file, ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
 
 
@@ -107,7 +106,7 @@ def convert_01(image, label):
 
 def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_args, 
     target_size=(400,400), color_mode="rgb", interpolation="lanczos", image_save_prefix="image", 
-    mask_save_prefix="mask", save_to_dir=None, shuffle=False, seed=SEED):
+    mask_save_prefix="mask", save_to_dir=None, shuffle=False, seed=common.SEED):
     """
     Args:
     batch_size

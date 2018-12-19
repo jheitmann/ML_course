@@ -5,7 +5,7 @@ from keras.optimizers import Adam
 from keras import backend
 from keras.initializers import he_normal, he_uniform
 
-from common import SEED
+import common
 
 def f1(y_true, y_pred):
     def recall(y_true, y_pred):
@@ -38,9 +38,10 @@ def f1(y_true, y_pred):
     return 2*((precision*recall)/(precision+recall+backend.epsilon()))
 
 
-def unet(input_size, pretrained_weights=None, seed=SEED, unif_init=True):
+def unet(input_size, pretrained_weights=None, seed=common.SEED, unif_init=True):
     kinit = he_uniform(seed=seed) if unif_init else he_normal(seed=seed)
-    print("[MODEL] Using kernel initializer {}".format("he_uniform" if unif_init else "he_normal"))
+    print("[MODEL] Using kernel initializer {} with seed {}".format(
+        "he_uniform" if unif_init else "he_normal", seed))
 
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer=kinit)(inputs)
