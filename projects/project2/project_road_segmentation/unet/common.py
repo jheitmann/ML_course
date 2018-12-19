@@ -1,4 +1,3 @@
-
 import os
 
 SEED = 2018 # seed used for randomness throughout the project

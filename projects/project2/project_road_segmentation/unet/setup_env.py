@@ -1,4 +1,3 @@
-
 import os
 from shutil import copyfile
 from PIL import Image

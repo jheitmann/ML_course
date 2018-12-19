@@ -1,6 +1,5 @@
 import argparse
 import numpy as np
-import skimage.io as io
 import os
 from datetime import datetime
 
@@ -24,16 +23,16 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
         monitor: [acc|loss|val_acc|val_loss] name of metric used for keeping checkpoints. val_* are only usable when steps_per_epoch < |steps|
         root_folder: use to override root_folder=os.getcwd (Typically when using main() in Google Colab)
     Raises:
-        AssertionError: when encountering discrepancies in pretrained_weights/current_model rgb,aug,img_height parameters
+        AssertionError: when encountering discrepancies in pretrained_weights/current_model rgb, img_height parameters
     """
     prepare_train(os.getcwd() if not root_folder else root_folder, verbose=True)
 
     n_channels = 3 if rgb else 1
     validation_split = (common.N_TRAIN_IMAGES - steps_per_epoch) / float(common.N_TRAIN_IMAGES)
-    input_size = (img_height, img_height, n_channels)
-    model = unet(input_size, pretrained_weights=pretrained_weights, seed=common.SEED)
+    input_size = (img_height,img_height,n_channels)
+    model = unet(input_size, pretrained_weights=pretrained_weights)
 
-    # Create validation parameters dict. passed to fit_generator(.) if using validation split in (0;1) else create an empty parameter dict
+    # Create validation parameters dict. passed to fit(.)/fit_generator(.)
     validation_params = {"validation_data": None}
 
     if chosen_validation:
@@ -48,7 +47,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
             validation_params['validation_steps'] = validation_steps
         
         if monitor and "val" in monitor:
-            assert 0 < validation_split < 1, "Monitoring a val metric with invalid validation_split"
+            assert validation_split > 0, "Monitoring a val metric with invalid validation_split"
         else:
             monitor = monitor if monitor else ("val_acc" if validation_split > 0 else "acc")
 

@@ -4,7 +4,8 @@ from keras.layers import *
 from keras.optimizers import Adam
 from keras import backend
 from keras.initializers import he_normal, he_uniform
-import common
+
+from common import SEED
 
 def f1(y_true, y_pred):
     def recall(y_true, y_pred):
@@ -36,8 +37,9 @@ def f1(y_true, y_pred):
     recall = recall(y_true, y_pred)
     return 2*((precision*recall)/(precision+recall+backend.epsilon()))
 
-def unet(input_size, pretrained_weights=None, seed=None):
-    kinit = he_uniform(seed=seed) if seed else 'he_normal'
+
+def unet(input_size, pretrained_weights=None, seed=SEED, unif_init=True):
+    kinit = he_uniform(seed=seed) if unif_init else he_normal(seed=seed)
     print(f"[MODEL] Using kernel initializer {kinit}")
 
     inputs = Input(input_size)
@@ -88,6 +90,6 @@ def unet(input_size, pretrained_weights=None, seed=None):
 
     model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
     
-    #model.summary()
+    model.summary()
 
     return model
