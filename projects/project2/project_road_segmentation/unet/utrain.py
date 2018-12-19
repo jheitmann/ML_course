@@ -31,7 +31,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
     n_channels = 3 if rgb else 1
     validation_split = (common.N_TRAIN_IMAGES - steps_per_epoch) / float(common.N_TRAIN_IMAGES)
     input_size = (img_height, img_height, n_channels)
-    model = unet(input_size, pretrained_weights=pretrained_weights)
+    model = unet(input_size, pretrained_weights=pretrained_weights, seed=common.SEED)
 
     # Create validation parameters dict. passed to fit_generator(.) if using validation split in (0;1) else create an empty parameter dict
     validation_params = {"validation_data": None}

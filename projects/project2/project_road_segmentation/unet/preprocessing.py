@@ -5,7 +5,7 @@ from datetime import datetime
 from keras.callbacks import ModelCheckpoint
 from keras.preprocessing.image import ImageDataGenerator
 
-from common import PIXEL_DEPTH, RESULTS_PATH
+from common import PIXEL_DEPTH, RESULTS_PATH, SEED
 
 
 def extract_data(image_path, num_images, img_height, as_rgb, *, verbose=True):
@@ -107,7 +107,7 @@ def convert_01(image, label):
 
 def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_args, 
     target_size=(400,400), color_mode="rgb", interpolation="lanczos", image_save_prefix="image", 
-    mask_save_prefix="mask", save_to_dir=None, shuffle=False, seed=1):
+    mask_save_prefix="mask", save_to_dir=None, shuffle=False, seed=SEED):
     """
     Args:
     batch_size

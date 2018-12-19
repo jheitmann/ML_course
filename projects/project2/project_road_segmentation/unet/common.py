@@ -1,6 +1,8 @@
 
 import os
 
+SEED = 2018 # seed used for randomness throughout the project
+
 #utrain
 SPLIT_TRAIN_PATH = "data/split/train"
 SPLIT_VAL_PATH = "data/split/val"
