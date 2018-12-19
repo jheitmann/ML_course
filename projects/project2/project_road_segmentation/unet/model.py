@@ -40,7 +40,7 @@ def f1(y_true, y_pred):
 
 def unet(input_size, pretrained_weights=None, seed=SEED, unif_init=True):
     kinit = he_uniform(seed=seed) if unif_init else he_normal(seed=seed)
-    print(f"[MODEL] Using kernel initializer {kinit}")
+    print("[MODEL] Using kernel initializer {}".format("he_uniform" if unif_init else "he_normal"))
 
     inputs = Input(input_size)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer=kinit)(inputs)
