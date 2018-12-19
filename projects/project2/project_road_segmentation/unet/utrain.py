@@ -1,13 +1,14 @@
-import argparse
-import numpy as np
 import os
+import argparse
 from datetime import datetime
+
+import numpy as np
+from keras.callbacks import CSVLogger
 
 import common
 from model import unet
 from preprocessing import extract_data, extract_labels, get_checkpoint, get_generators
 from setup_env import check_env, prepare_train
-
 
 def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation, rgb,
     pretrained_weights, monitor, *, data_gen_args=common.DEFAULT_GEN_ARGS, root_folder=None):
@@ -37,6 +38,9 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
     # Create validation parameters dict. passed to fit(.)/fit_generator(.)
     validation_params = {"validation_data": None}
 
+    # Create CSVLogger callback to retrieve the metrics history
+    csvlog = CSVLogger(common.CSVLOG_PATH)
+
     if chosen_validation:
         val_imgs = extract_data(common.SPLIT_VAL_IMG_PATH, common.N_SPLIT_VAL, img_height, rgb)
         val_gt_imgs = extract_labels(common.SPLIT_VAL_GT_PATH, common.N_SPLIT_VAL, img_height)
@@ -59,7 +63,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
     
     print(f"Training on images of size {img_height}*{img_height} with {n_channels} input channel(s).")
     print("Using {} dataset {} chosen validation for training".format("raw" if not aug else "augmented", "with" if chosen_validation else "without"))
-    print("Monitoring with", monitor)
+    print("Monitoring with", monitor, "saving metrics to", common.CSVLOG_PATH)
 
     if not aug:
         if chosen_validation:
@@ -70,8 +74,9 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
             gt_imgs = extract_labels(common.TRAIN_GT_PATH, common.N_TRAIN_IMAGES, img_height)
 
         ckpt_file, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
-        model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1, validation_split=validation_split, 
-                    validation_data=validation_params['validation_data'], shuffle=False, callbacks=[model_checkpoint])
+        model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
+            validation_split=validation_split, validation_data=validation_params['validation_data'],
+            shuffle=False, callbacks=[model_checkpoint, csvlog])
         
     else:
         color_mode = "rgb" if rgb else "grayscale"
@@ -87,7 +92,8 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
             validation_params["validation_data"] = validation_generator 
         
         ckpt_file, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
-        model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs, verbose=1, callbacks=[model_checkpoint], **validation_params)
+        model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs,
+            verbose=1, callbacks=[model_checkpoint, csvlog], **validation_params)
     
     return ckpt_file
 
@@ -120,7 +126,7 @@ if __name__=="__main__":
         rotation_range=args.rot if args.rot else common.DEFAULT_GEN_ARGS.rotation,
         width_shift_range=args.shift if args.shift else 0,
         height_shift_range=args.shift if args.shift else 0,
-        zoom_range=args.zoom if args.zoom else 0  
+        zoom_range=args.zoom if args.zoom else 0
     )
     main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.augmented,
         args.chosen_validation, args.rgb_images, args.preweights, args.monitor,
