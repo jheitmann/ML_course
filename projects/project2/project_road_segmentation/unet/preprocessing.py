@@ -82,11 +82,11 @@ def get_checkpoint(img_height, rgb, monitor):
     Returns:
         Filename and the Checkpoint itself
     """
-    hdf5_name = "unet_{}_{}_{}.hdf5".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
-    print("hdf5 name:", hdf5_name)
-    
-    ckpt_file = os.path.join(common.RESULTS_PATH, hdf5_name)
-    return ckpt_file, ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
+    file_id = "unet_{}_{}_{}".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
+    ckpt_file = os.path.join(common.RESULTS_PATH, file_id + ".hdf5") 
+    print("Checkpoint filename:", ckpt_file)
+
+    return file_id, ModelCheckpoint(ckpt_file, monitor=monitor, verbose=1, save_best_only=True)
 
 
 def convert_01(image, label):

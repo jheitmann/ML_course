@@ -1,6 +1,6 @@
 import os
-from shutil import copyfile
 from PIL import Image
+from shutil import copyfile
 
 import common
 

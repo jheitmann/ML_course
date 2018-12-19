@@ -4,6 +4,9 @@ import numpy as np
 import os
 from PIL import Image
 
+import common
+
+
 def img_float_to_uint8(img):
     """
     Converts the img np.array to corresponding uint8 np.array
@@ -29,7 +32,7 @@ def make_img_overlay(img, predicted_img):
     w = img.shape[0]
     h = img.shape[1]
     color_mask = np.zeros((w, h, 3), dtype=np.uint8)
-    color_mask[:,:,0] = predicted_img # *PIXEL_DEPTH
+    color_mask[:,:,0] = predicted_img 
 
     img8 = img_float_to_uint8(img)
     background = Image.fromarray(img8, 'RGB').convert("RGBA")
@@ -190,7 +193,7 @@ def predictions_to_masks(result_path, test_name, preds, output_height, four_spli
         output_height: size for resizing logits into (if not using four_split)
         four_split: bool set True to use four_split method instead of resizing (more details in report)
         averaged_preds_size: size of outputs fed into four_split algorithm
-        use_mean: bool set True if max is used instead of mean to combine splits        
+        use_max: bool set True if max is used instead of mean to combine splits        
         mask_folder: name of subfolder containing resulting masks
         logits_folder: name of subfolder containing resulting logits (if using save_logits=True)
         overlay_folder: name of subfolder containing resulting overlays (if using save_overlay=True) 

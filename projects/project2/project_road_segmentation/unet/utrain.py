@@ -1,8 +1,8 @@
-import os
 import argparse
-from datetime import datetime
-
 import numpy as np
+import os
+
+from datetime import datetime
 from keras.callbacks import CSVLogger
 
 import common
@@ -38,9 +38,6 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
     # Create validation parameters dict. passed to fit(.)/fit_generator(.)
     validation_params = {"validation_data": None}
 
-    # Create CSVLogger callback to retrieve the metrics history
-    csvlog = CSVLogger(common.CSVLOG_PATH)
-
     if chosen_validation:
         val_imgs = extract_data(common.SPLIT_VAL_IMG_PATH, common.N_SPLIT_VAL, img_height, rgb)
         val_gt_imgs = extract_labels(common.SPLIT_VAL_GT_PATH, common.N_SPLIT_VAL, img_height)
@@ -63,8 +60,8 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
     
     print(f"Training on images of size {img_height}*{img_height} with {n_channels} input channel(s).")
     print("Using {} dataset {} chosen validation for training".format("raw" if not aug else "augmented", "with" if chosen_validation else "without"))
-    print("Monitoring with", monitor, "saving metrics to", common.CSVLOG_PATH)
-
+    print("Monitoring with", monitor)
+    
     if not aug:
         if chosen_validation:
             imgs = extract_data(common.SPLIT_TRAIN_IMG_PATH, common.N_SPLIT_TRAIN, img_height, rgb)
@@ -73,10 +70,12 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
             imgs = extract_data(common.TRAIN_IMG_PATH, common.N_TRAIN_IMAGES, img_height, rgb)
             gt_imgs = extract_labels(common.TRAIN_GT_PATH, common.N_TRAIN_IMAGES, img_height)
 
-        ckpt_file, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
+        file_id, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
+        # Create CSVLogger callback to retrieve the metrics history
+        log_filename = file_id + ".csv"
         model.fit(x=imgs, y=gt_imgs, batch_size=batch_size, epochs=epochs, verbose=1,
             validation_split=validation_split, validation_data=validation_params['validation_data'],
-            shuffle=False, callbacks=[model_checkpoint, csvlog])
+            shuffle=False, callbacks=[model_checkpoint, CSVLogger(log_filename)])
         
     else:
         color_mode = "rgb" if rgb else "grayscale"
@@ -91,11 +90,13 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
                                                                     data_gen_args,  target_size=(img_height,img_height), color_mode=color_mode)
             validation_params["validation_data"] = validation_generator 
         
-        ckpt_file, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
+        file_id, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
+        # Create CSVLogger callback to retrieve the metrics history
+        log_filename = file_id + ".csv"
         model.fit_generator(train_generator, steps_per_epoch=steps_per_epoch, epochs=epochs,
-            verbose=1, callbacks=[model_checkpoint, csvlog], **validation_params)
+            verbose=1, callbacks=[model_checkpoint, CSVLogger(log_filename)], **validation_params)
     
-    return ckpt_file
+    return file_id
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
@@ -114,16 +115,16 @@ if __name__=="__main__":
     parser.add_argument("-pre", "--preweights", type=str, help="path to pretrained weights")
     parser.add_argument("--monitor", type=str, choices=["acc", "loss", "val_acc", "val_loss"],
                         default="", help="monitor metric for checkpoint")
-    parser.add_argument("--rot", type=float,
+    parser.add_argument("--rotation", type=int,
                         help="rotation augmentation for ImageDataGenerator (default:90)")
-    paser.add_argument("--zoom", type=float,
+    parser.add_argument("--zoom", type=float,
                         help="zoom augmentation for ImageDataGenerator (default:None)")
     parser.add_argument("--shift", type=float,
                         help="shift (x and y) augmentation for ImageDataGenerator (default:None)")
     args = parser.parse_args()
-    print(args.rot, args.shift, args.zoom)
+    print(args.rotation, args.shift, args.zoom)
     data_gen_args = dict(
-        rotation_range=args.rot if args.rot else common.DEFAULT_GEN_ARGS.rotation,
+        rotation_range=args.rotation if args.rotation else common.DEFAULT_GEN_ARGS['rotation'],
         width_shift_range=args.shift if args.shift else 0,
         height_shift_range=args.shift if args.shift else 0,
         zoom_range=args.zoom if args.zoom else 0
