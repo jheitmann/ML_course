@@ -64,7 +64,7 @@ def main(img_height, batch_size, epochs, steps_per_epoch, aug, chosen_validation
     
     file_id, model_checkpoint = get_checkpoint(img_height, rgb, monitor)
     # Create CSVLogger callback to retrieve the metrics history
-    log_filename = file_id + ".csv"
+    log_filename = os.path.join(common.LOGDIR, file_id + ".csv")
     if not aug:
         if chosen_validation:
             imgs = extract_data(common.SPLIT_TRAIN_IMG_PATH, common.N_SPLIT_TRAIN, img_height, rgb)
