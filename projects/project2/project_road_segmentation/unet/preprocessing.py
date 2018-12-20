@@ -17,11 +17,10 @@ def extract_data(image_path, num_images, img_height, as_rgb, *, verbose=True):
         img_height: resized image target width/height
         as_rgb: flag set True when images need to be loaded as rgb
         verbose: named flag set False to disable information printed by this method
-    Raises:
-        FileNotFoundError: if no image {filename}{id}.png is found for id in [1; num_images] 
     Returns:
         4D tensor [image index, y, x, channels]
     """
+    # Loads all the image file paths in img_filenames 
     imgs = []
     img_filenames = [os.path.join(image_path, fn) for fn in os.listdir(image_path)]
     img_filenames.sort()
@@ -29,10 +28,12 @@ def extract_data(image_path, num_images, img_height, as_rgb, *, verbose=True):
     for filename in img_filenames[:num_images]:
         if verbose:
             print(f"Loading {filename}")
+        # Reads the image into an np.array, resamples it
         img = cv2.imread(filename, as_rgb)
         img = cv2.resize(img, dsize=(img_height, img_height), interpolation=cv2.INTER_AREA)
         if not as_rgb:
             img = img[..., np.newaxis]
+        # Converts into correct form [0;1] to input in the neuralnet
         img = img.astype('float32')
         img /= common.PIXEL_DEPTH
         imgs.append(img)            
@@ -48,11 +49,10 @@ def extract_labels(label_path, num_images, img_height, *, verbose=True):
         num_images: size 0 of returned tensor, ammount of extracted images
         img_height: resized image target width/height
         verbose: named flag set False to disable information printed by this method
-    Raises:
-        FileNotFoundError: if no image {filename}{id}.png is found for id in [1; num_images] 
     Returns:
-        1-hot matrix [image index, label index]
+        np.array of the #num_images labels np.arrays
     """
+    # Loads all the label file paths in img_filenames 
     gt_imgs = []
     gt_filenames = [os.path.join(label_path, fn) for fn in os.listdir(label_path)]
     gt_filenames.sort()
@@ -60,9 +60,13 @@ def extract_labels(label_path, num_images, img_height, *, verbose=True):
     for filename in gt_filenames[:num_images]:
         if verbose:
             print (f"Loading {filename}")
+
+        # Reads the image into an np.array, resamples it
         labels = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
         labels = cv2.resize(labels, (img_height, img_height))
         labels = labels[..., np.newaxis]
+
+        # Converts into correct form one of {0;1} to input in the neuralnet
         labels = labels.astype('float32')
         labels /= common.PIXEL_DEPTH
         labels[labels >= 0.5] = 1
@@ -80,8 +84,9 @@ def get_checkpoint(img_height, rgb, monitor):
         rgb: bool set True when using 3 channels
         monitor: [acc|loss|val_acc|val_loss] name of metric used for keeping checkpoints
     Returns:
-        Filename and the Checkpoint itself
+        Tuple of filename and the checkpoint itself
     """
+    # Creates the complete path ckpt_file of to-be-saved model checkpoint
     file_id = "unet_{}_{}_{}".format("rgb" if rgb else "bw", img_height, str(datetime.now()).replace(':', '_').replace(' ', '_'))
     ckpt_file = os.path.join(common.RESULTS_PATH, file_id + ".hdf5") 
     print("Checkpoint filename:", ckpt_file)
@@ -98,8 +103,9 @@ def convert_01(image, label):
     Returns:
         Converted image and label
     """
-    image /= 255.
-    label /= 255.
+    image /= float(common.PIXEL_DEPTH)
+    label /= float(common.PIXEL_DEPTH)
+    # Thresholds the labels to choose one in {0;1}
     label[label <= .5], label[label > .5] = 0, 1
     return image, label
 
@@ -109,7 +115,7 @@ def get_generators(batch_size, train_path, image_folder, mask_folder, data_gen_a
     mask_save_prefix="mask", save_to_dir=None, shuffle=False, seed=common.SEED):
     """
     Args:
-    batch_size
+        batch_size: batch_size of generator
         train_path: path to directory containing subdirectories of images and masks
         image_folder: name of subdirectory in train_path containing images
         mask_folder: name of subdirectory in train_path containing masks
