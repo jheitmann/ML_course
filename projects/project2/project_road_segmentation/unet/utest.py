@@ -18,16 +18,20 @@ def main(ckpt_path, four_split, use_max, training, *, foreground_threshold=0.25,
         foreground_threshold: threshold used to determine when to label a path as 'foreground'
         root_folder: use to override root_folder=os.getcwd (Typically when using main() in Google Colab)
     """
+    # Prepares environment for the testing (creates the folder structure needed for our code)
     prepare_test(os.getcwd() if not root_folder else root_folder, verbose=True)
 
-    img_height = int(os.path.basename(ckpt_path).split("_")[2].split('.')[0]) # extract the image height from the checkpoint file name
+    # Extracts testing parameters from the filename of the hdf5 file
+    img_height = int(os.path.basename(ckpt_path).split("_")[2].split('.')[0])
     rgb = "rgb" in ckpt_path
     n_channels = 3 if rgb else 1    
     input_size = (img_height,img_height,n_channels)
-    model = unet(input_size, pretrained_weights=ckpt_path, seed=common.SEED)
+    # Recreates the model using the weights of the checkpoint
+    model = unet(input_size, pretrained_weights=ckpt_path)
 
     print('Neural network input size:', input_size)
 
+    # Extracts the testing dataset, depending on if we use the four_split method or not
     if four_split:
         assert not training, "Four split on training dataset is a bad idea (images already at correct scale)"
         imgs = extract_data(common.TESTING_PATH_FOURSPLIT, common.N_TEST_IMAGES * 4, img_height, rgb)
@@ -37,9 +41,11 @@ def main(ckpt_path, four_split, use_max, training, *, foreground_threshold=0.25,
         else:
             imgs = extract_data(common.TEST_IMG_PATH, common.N_TEST_IMAGES, img_height, rgb)
     
+    # Predicts the testing dataset using the model
     print("Computing predictions...")
     preds = model.predict(imgs, batch_size=1, verbose=1)
     
+    # Generates prediction masks
     print('Generating predicted masks in', common.RESULTS_PATH)
     result_path = common.RESULTS_PATH + ("train/" if training else "test/")
     test_name = os.path.join(common.TRAIN_IMG_PATH, "satImage") if training else os.path.join(common.TEST_IMG_PATH, "test")
@@ -47,9 +53,11 @@ def main(ckpt_path, four_split, use_max, training, *, foreground_threshold=0.25,
     predicted_mask_files = predictions_to_masks(result_path, test_name, preds, output_height, 
                                                     four_split, common.TEST_IMG_HEIGHT, use_max)
     
+    # Generates submission csv
     print('Generating submission at', common.SUBM_PATH)
     masks_to_submission(common.SUBM_PATH, predicted_mask_files, foreground_threshold=foreground_threshold)
 
+    # Displays the F1_score, when we use training dataset validation
     if training:
         f1_score = compute_trainset_f1(common.SUBM_PATH)
         print(f"Training set f1-score: {f1_score}")
@@ -57,7 +65,8 @@ def main(ckpt_path, four_split, use_max, training, *, foreground_threshold=0.25,
     return common.SUBM_PATH
 
 
-if __name__=="__main__":    
+if __name__=="__main__":
+    # Defines all parser arguments when launching the script directly in terminal
     parser = argparse.ArgumentParser()
     parser.add_argument("ckpt_path", type=str,
                         help="path to ckpt file")
