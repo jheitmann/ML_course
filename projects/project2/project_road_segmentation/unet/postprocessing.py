@@ -35,8 +35,10 @@ def make_img_overlay(img, predicted_img):
     color_mask[:,:,0] = predicted_img 
 
     img8 = img_float_to_uint8(img)
+    # Creates the two images of background and read overlay with transparency channel
     background = Image.fromarray(img8, 'RGB').convert("RGBA")
     overlay = Image.fromarray(color_mask, 'RGB').convert("RGBA")
+    # Blends the two layers into one image, returns it
     new_img = Image.blend(background, overlay, 0.2)
     return new_img
 
@@ -67,6 +69,8 @@ def four_split_mean(masks, output_height):
     grouped_preds = masks.reshape((n_imgs, common.PREDS_PER_IMAGE, preds_height, preds_height))
     print(f"Grouped shape: {grouped_preds.shape}")
     
+    # Creates divmat, a matrix where m[i,j] is the divisor of the sum of pixels. Can be 1, 2 or 4
+    # depending on if the coordinate is summing 1, 2 or 4 images at once.
     averaged_preds = []
     onemat = np.ones((preds_height,preds_height), dtype=np.uint8)
     divmat = np.zeros((output_height,output_height), dtype=np.uint8)
@@ -74,6 +78,7 @@ def four_split_mean(masks, output_height):
         x0,y0,x1,y1 = area
         divmat[x0:x1,y0:y1] += onemat
 
+    # Averages the 4 prediction splits into one prediction split.
     for i in range(n_imgs):
         four_preds = grouped_preds[i]
         output = np.zeros((output_height,output_height))
@@ -108,6 +113,8 @@ def four_split_max(masks, output_height):
     
     max_preds = []
 
+    # Performs aggregation of the four predictions splits, not by averaging but
+    # by taking the maximum prediction of the 1, 2 or 4 possibilities instead.
     for i in range(n_imgs):
         four_preds = grouped_preds[i]
         output = np.zeros((common.PREDS_PER_IMAGE,output_height,output_height))
@@ -133,8 +140,9 @@ def convert_predictions(logits_masks, output_height, four_split, averaged_preds_
         four_split: bool set True to use four_split method instead of resizing (more details in report)
         averaged_preds_size: size of outputs fed into four_split algorithm
         use_max: bool set True if max is used instead of mean to combine splits        
-        mask_path: path the the folder containing resulting masks
-        logits_path: path the the folder containing resulting logits (if using save_logits=True)
+        mask_path: path to the folder containing resulting masks
+        logits_path: path to the folder containing resulting logits (if using save_logits=True)
+        overlay_path: path to the folder constaining resulting overlays (if using save_overlay=True)
         test_name: a partial path pointing to image before "_number.png", like "data/test/test"
         save_logits: bool set True to save the logits images
         save_overlay: bool set True to save the overlays of the masks in red transparency over the imgs
@@ -206,10 +214,13 @@ def predictions_to_masks(result_path, test_name, preds, output_height, four_spli
     logits_path = os.path.join(result_path, logits_folder)
     overlay_path = os.path.join(result_path, overlay_folder)
 
+    # Converts an output prediction np.array to a logit pixels np.array taking values in [0;255] to
+    # represent to underlying logit probability
     logits_masks = preds * common.PIXEL_DEPTH
     logits_masks = np.round(logits_masks).astype('uint8')
     logits_masks = np.squeeze(logits_masks)
  
+    # Serializes the data about those predictions and returns the paths to predicted masks files
     return convert_predictions(logits_masks, output_height, four_split, averaged_preds_size, use_max, mask_path,
                                     logits_path, overlay_path, test_name, save_logits, save_overlay)
 
@@ -256,6 +267,7 @@ def masks_to_submission(submission_filename, image_filenames, foreground_thresho
         submission_filename: filename (path) of csv file created by this function
         image_filenames: iterator of masks filenames (paths) to convert to csv
     """
+    # Creates a submission csv at submission filename and writes the submissions_strings in each row
     with open(submission_filename, 'w') as f:
         f.write('id,prediction\n')
         for fn in image_filenames:
@@ -310,6 +322,7 @@ def compute_trainset_f1(test_csv, train_masks_dir="data/train/label", verbose=Fa
     assert sum(len(a) for a in accs) == 100 * 25 * 25,\
         f"Abnormal sum of true/false pos/neg ({sum(len(a) for a in accs)})"
 
+    # Computes f1 score based on the training dataset, returns it
     precision = ntp / (ntp + nfp)
     vprint("precision", precision)
     recall = ntp / (ntp + nfn)
