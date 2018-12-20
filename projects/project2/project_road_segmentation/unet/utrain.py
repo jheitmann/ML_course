@@ -119,6 +119,7 @@ if __name__=="__main__":
     parser.add_argument("--shift", type=float,
                         help="shift (x and y) augmentation for ImageDataGenerator (default:None)")
     args = parser.parse_args()
+    """
     print(args.rotation, args.shift, args.zoom)
     data_gen_args = dict(
         rotation_range=args.rotation if args.rotation else common.DEFAULT_GEN_ARGS['rotation'],
@@ -126,6 +127,12 @@ if __name__=="__main__":
         height_shift_range=args.shift if args.shift else 0,
         zoom_range=args.zoom if args.zoom else 0
     )
+    """
+    data_gen_args = common.DEFAULT_GEN_ARGS
+    if args.rotation: data_gen_args["rotation_range"] = args.rotation
+    if args.shift: data_gen_args["width_shift_range"] = args.shift
+    if args.shift: data_gen_args["height_shift_range"] = args.shift
+    if args.zoom: data_gen_args["zoom_range"] = args.zoom
     main(args.img_height, args.batch_size, args.epochs, args.steps_per_epoch, args.augmented,
         args.chosen_validation, args.rgb_images, args.preweights, args.monitor,
         data_gen_args=data_gen_args)

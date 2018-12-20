@@ -91,6 +91,13 @@ def check_env(root_folder, *, verbose=False):
         vprint(f"[ENV] Found subdirectory {d}.")
     return None
 
+def contains_all_test_images(verbose=False):
+    vprint = common.GET_VERBOSE_PRINT(verbose)
+    test_img_files = os.listdir(common.TEST_IMG_PATH)
+    folder_full = len(test_img_files) >= 50
+    vprint("{} {} test images.".format(common.TEST_IMG_PATH, "contains all" if folder_full else "is missing some"))
+    return folder_full
+
 def gen_four_split(original_images_dir, foursplit_dir):
     """
     Generate four splits images
@@ -175,10 +182,12 @@ def prepare_test(root_folder, *, verbose=False):
 
     missing = check_env(root_folder)
     vprint(f"[ENV] check_env on {root_folder} returned {missing}")
-    if not missing:
+    contains_all_imgs = contains_all_test_images(verbose=True)
+    vprint(f"[ENV] contains_all_test_images returned {contains_all_imgs}")
+    if not missing and contains_all_imgs:
         return
 
-    test_img_folder = os.path.join(common.TEST_PATH, "image")
+    test_img_folder = os.path.join(common.TEST_PATH, common.IMG_SUBFOLDER)
     test_img_folders_root = os.path.join(root_folder, "test_set_images/") 
     assert os.path.isdir(test_img_folders_root), f"The test_set_images/ dataset folder was not found in {root_folder}."
     complete_env(root_folder, verbose=verbose)
