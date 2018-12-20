@@ -187,12 +187,13 @@ def prepare_test(root_folder, *, verbose=False):
         vprint(f"[ENV] contains_all_test_images returned {contains_all_imgs}")
         if contains_all_imgs:
             return
-        raise Exception("[ENV] env is complete but all the images are not there. Delete ENV and restart.")
-
+        #raise Exception("[ENV] env is complete but all the images are not there. Delete ENV and restart.")
+    else:
+        complete_env(root_folder, verbose=verbose)
     test_img_folder = os.path.join(common.TEST_PATH, common.IMG_SUBFOLDER)
     test_img_folders_root = os.path.join(root_folder, "test_set_images/") 
     assert os.path.isdir(test_img_folders_root), f"The test_set_images/ dataset folder was not found in {root_folder}."
-    complete_env(root_folder, verbose=verbose)
+    
 
     for original_test_img_folder in os.listdir(test_img_folders_root):
         original_test_img_folder_path = os.path.join(test_img_folders_root, original_test_img_folder)
